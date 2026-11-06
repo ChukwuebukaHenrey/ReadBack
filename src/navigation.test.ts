@@ -27,6 +27,6 @@ describe('deterministic navigation', () => {
         expect(reducer(initialState, { type: 'navigate', view: 'home' }).history).toEqual([]);
     });
     it('discloses current limitations when discovering capabilities', () => {
-        expect(reducer(initialState, { type: 'command', command: 'what_can_i_do' }).announcement).toContain('payments are not available');
+        expect(reducer(initialState, { type: 'command', command: 'what_can_i_do' }).announcement).toContain('Payments are not available');
     });
 });

@@ -40,7 +40,7 @@ export function reducer(state: State, action: Action): State {
         return { ...next, announcement: 'Request not recognized. Try “Where am I?”, “What can I do?”, “Go back”, “Repeat”, or choose a page below. Payments are not available yet.' };
     switch (action.command) {
         case 'where_am_i': return { ...next, announcement: location(state.view) };
-        case 'what_can_i_do': return { ...next, announcement: 'You can navigate Home, Wallet, Saved contacts, Send SOL, Recent activity and Explore Web3; read learning topics; ask where you are; go back; or repeat. Wallet creation and payments are not available yet.' };
+        case 'what_can_i_do': return { ...next, announcement: 'You can create or reload a disposable Devnet wallet, check its live balance, copy its public address, open the test faucet, read learning topics, ask where you are, go back or repeat. Payments are not available yet.' };
         case 'repeat': return next;
         case 'go_back': {
             const view = state.history.at(-1);

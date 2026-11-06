@@ -128,6 +128,20 @@ input::placeholder { color: #afb4bc; }
 .learning summary { padding: 12px 4px; min-height: 48px; font-size: 18px; }
 .learning details p { padding: 8px 4px; line-height: 1.8; font-size: 15px; }
 .app-footer { border-top: 1px solid var(--border); padding: 22px 40px; color: var(--muted); font-size: 11px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.wallet-panel > svg { color: var(--accent); margin-bottom: 16px; }
+.wallet-warning { border-left: 2px solid var(--accent); padding-left: 14px; font-size: 14px; line-height: 1.7; }
+.wallet-panel .checkbox-label { display: flex; align-items: flex-start; gap: 12px; padding: 16px 0; font-size: 14px; }
+.wallet-panel > button { white-space: normal; }
+.balance-block { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 24px 0 16px; margin: 24px 0; }
+.balance-label { font-size: 11px; letter-spacing: 1.4px; color: var(--muted); }
+.balance-value { font-size: clamp(28px, 5vw, 44px); color: var(--text); line-height: 1.2; margin: 12px 0; overflow-wrap: anywhere; }
+.balance-value span { color: var(--accent); font-size: 22px; }
+.balance-provenance, .persistence-note { font-size: 12px; line-height: 1.7; }
+.address-heading { font-size: 15px; margin-bottom: 12px; }
+.wallet-address { font-family: ui-monospace, monospace; font-size: 15px; color: var(--text); overflow-wrap: anywhere; user-select: all; }
+.wallet-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+.wallet-actions button, .wallet-actions a { font-size: 13px; }
+.error-message { color: var(--danger); border-left: 2px solid var(--danger); padding-left: 12px; margin-top: 20px; font-size: 14px; }
 
 @media (min-width: 1600px) { .hero { padding-top: 80px; } }
 @media (max-width: 1100px) {
