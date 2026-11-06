@@ -8,6 +8,7 @@ import { topics } from './learning';
 import { interpretRequest } from './lib/intent';
 import type { Intent } from './lib/intent';
 import { WalletPanel } from './features/wallet/WalletPanel';
+import { ContactsPanel } from './features/contacts/ContactsPanel';
 
 const viewIcons: Record<View, IconName> = { home: 'home', wallet: 'wallet', contacts: 'contacts', transfer: 'send', activity: 'activity', learn: 'learn' };
 const actionCopy: Partial<Record<View, string>> = { wallet: 'Your wallet and test SOL', transfer: 'Review before you approve', activity: 'Understand what happened', learn: 'A little clarity goes a long way' };
@@ -78,7 +79,7 @@ export function App() {
         <div className="view-heading"><div><p className="eyebrow">{state.view === 'home' ? 'A LITTLE CLARITY GOES A LONG WAY' : 'SOLANA, AT YOUR PACE'}</p><h1 ref={heading} tabIndex={-1}>{state.view === 'home' ? <>What would you<br />like to do?</> : views[state.view]}</h1></div><img className="workspace-mark" src="/assets/readback-mark.png" width="128" height="128" alt="" /></div>
         {state.view === 'home' && <><p className="intro">Your next step starts here. Choose an action or type a request.</p><div className="home-actions">{(['wallet', 'transfer', 'activity', 'learn'] as View[]).map((view, index) => <button key={view} onClick={() => navigate(view)}><div className="action-top"><Icon name={viewIcons[view]} size={26} /><span className="action-number" aria-hidden="true">0{index + 1}</span></div><span className="action-title">{view === 'wallet' ? 'Check balance' : views[view]}</span><span className="action-description">{actionCopy[view]}</span><Icon name="arrow" size={20} /></button>)}</div></>}
         {state.view === 'wallet' && <WalletPanel />}
-        {state.view === 'contacts' && <section className="panel empty-state"><Icon name="contacts" size={36} /><h2>No saved contacts</h2><p>Adding contacts is not available yet. Before payments are enabled, each pasted address must be reviewed and independently verified.</p></section>}
+        {state.view === 'contacts' && <ContactsPanel />}
         {state.view === 'transfer' && <section className="panel empty-state"><Icon name="shield" size={36} /><h2>Payments are not available yet</h2><p>A payment will require a wallet, a verified saved contact, an exact amount, fee checks, simulation and your explicit approval.</p><button onClick={() => navigate('contacts')}>View saved contacts <Icon name="arrow" size={18} /></button></section>}
         {state.view === 'activity' && <section className="panel empty-state"><Icon name="activity" size={36} /><h2>No wallet connected</h2><p>Transaction history has not been retrieved. Once the live wallet is implemented, this page will show actual Devnet activity and distinguish pending from confirmed transactions.</p></section>}
         {state.view === 'learn' && <section className="learning" aria-label="Learning topics"><p className="intro">A few clear explanations to get you started. Learning never executes transactions.</p>{topics.map(topic => <details key={topic.id} open={selectedTopic === topic.id} onToggle={event => { if (event.currentTarget.open) setSelectedTopic(topic.id); else setSelectedTopic(current => current === topic.id ? null : current); }}><summary>{topic.title}</summary><p>{topic.text}</p></details>)}</section>}

@@ -142,6 +142,18 @@ input::placeholder { color: #afb4bc; }
 .wallet-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
 .wallet-actions button, .wallet-actions a { font-size: 13px; }
 .error-message { color: var(--danger); border-left: 2px solid var(--danger); padding-left: 12px; margin-top: 20px; font-size: 14px; }
+.contact-list { list-style: none; padding: 0; }
+.contact-list li { padding: 24px 0; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+.contact-list h2 { font-size: 20px; margin-bottom: 8px; }
+.contact-list p { margin-bottom: 8px; }
+.contact-list span { font-size: 12px; color: var(--muted); }
+.contact-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.contact-actions button { font-size: 12px; }
+.contact-form label, .contacts-panel .panel > label:not(.checkbox-label) { display: block; margin: 18px 0 8px; font-size: 14px; }
+.contact-form button { margin-top: 20px; }
+.contacts-panel .checkbox-label { display: flex; gap: 12px; align-items: flex-start; margin-top: 20px; font-size: 14px; }
+.contacts-panel details { margin: 16px 0; }
+.contacts-panel summary { min-height: 44px; padding: 10px 0; cursor: pointer; }
 
 @media (min-width: 1600px) { .hero { padding-top: 80px; } }
 @media (max-width: 1100px) {
