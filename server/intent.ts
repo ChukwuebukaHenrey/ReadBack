@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { intentSchema, requestSchema } from '../src/lib/intent.ts';
+import { intentSchema, requestSchema } from '../src/lib/intent.js';
 
 type Environment = { GROQ_API_KEY?: string; GROQ_MODEL?: string };
 const completionSchema = z.object({ choices: z.array(z.object({ message: z.object({ content: z.string().max(4096) }) })).min(1) });
