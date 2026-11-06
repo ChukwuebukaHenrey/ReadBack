@@ -1,0 +1,18 @@
+import { Brand } from './components/Brand';
+import { Icon } from './components/Icon';
+
+export function Landing() {
+  return <div className="landing">
+    <a className="skip" href="#main">Skip to main content</a>
+    <header className="site-header"><a className="brand" href="#" aria-label="Readback home"><Brand /></a><nav aria-label="Website navigation"><a href="#how-it-works">How it works</a><a href="#principles">Our approach</a></nav><a className="button primary" href="#app">Open Readback <Icon name="arrow" size={18} /></a></header>
+    <main id="main" tabIndex={-1}>
+      <section className="hero" aria-labelledby="hero-heading">
+        <div className="hero-copy"><p className="eyebrow">A CLEARER WAY INTO WEB3</p><h1 id="hero-heading">Every step.<br />Understood.<br /><span>Every action.<br />Your choice.</span></h1><p className="hero-description">Explore Solana at your pace. Clear words, familiar controls, and a little more confidence in what comes next.</p><div className="hero-buttons"><a className="button primary" href="#app">Try Readback <Icon name="arrow" size={18} /></a><a className="text-link" href="#how-it-works">See how it works <span aria-hidden="true">↘</span></a></div><p className="hero-note"><span className="status-dot" aria-hidden="true" />Devnet prototype · Test funds only · No signup</p></div>
+        <div className="hero-art" aria-hidden="true"><div className="hero-orbit" /><div className="portrait-crop"><img src="/assets/readback-portrait.png" alt="" fetchPriority="high" /></div><span className="art-caption">UNDERSTANDING COMES FIRST.</span></div>
+      </section>
+      <section id="how-it-works" className="how-section" aria-labelledby="how-heading"><div className="section-intro"><p className="eyebrow">LESS GUESSWORK. MORE CLARITY.</p><h2 id="how-heading">Web3, in a language<br />that makes sense.</h2><p>Start with what you want to do.<br />Take it one step at a time.</p></div><ol className="steps"><li><span className="step-index">01 / DISCOVER</span><Icon name="keyboard" size={32} /><h3>Choose your way.</h3><p>Use your keyboard, screen reader or a typed request. Ask “What can I do?” whenever you need a hand.</p></li><li><span className="step-index">02 / UNDERSTAND</span><Icon name="learn" size={32} /><h3>Make it make sense.</h3><p>Explore clear explanations of Solana, network fees and wallet safety. No jargon required.</p></li><li><span className="step-index">03 / STAY IN CONTROL</span><Icon name="shield" size={32} /><h3>You make the call.</h3><p>We’re building exact payment readbacks and explicit approval. Payments are not enabled in this preview.</p></li></ol></section>
+      <section id="principles" className="principles" aria-labelledby="principles-heading"><div><p className="eyebrow">BUILT AROUND UNDERSTANDING</p><h2 id="principles-heading">Technology should<br />open the door.<br /><span>Then get out of the way.</span></h2><p>Readback is an accessibility-first experiment for the Solana hackathon. We’re building for different ways of interacting, and documenting what still needs testing.</p><a className="button secondary" href="#app">Explore the prototype <Icon name="arrow" size={18} /></a></div><div className="principle-art"><img src="/assets/readback-mark.png" alt="" loading="lazy" width="360" height="360" /><p>AI interprets.<br />Code verifies.<br /><strong>You authorize.</strong></p></div></section>
+    </main>
+    <footer className="site-footer"><a className="brand" href="#"><Brand /></a><p>Made for different ways of interacting.</p><a href="#app">Open the Devnet prototype <span aria-hidden="true">↗</span></a></footer>
+  </div>;
+}

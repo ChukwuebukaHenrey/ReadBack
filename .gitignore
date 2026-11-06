@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.txt
+.env.local
+.env.*.local
+*keypair*.json
+*credentials*.json
+.vercel/
+*-preview.png
