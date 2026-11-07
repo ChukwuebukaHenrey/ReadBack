@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { checkedText } from './refusals';
+import { checkedText } from './refusals.js';
 
 const sol = z.string().regex(/^\d+(\.\d{1,9})?$/);
 /** Facts only. The contact name is never sent to the AI; it is "a saved contact". */
