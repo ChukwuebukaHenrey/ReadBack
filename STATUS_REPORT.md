@@ -43,7 +43,7 @@ Read against `docs/READBACK_BUILD_SPEC.md`, `docs/codex.md` and `docs/DESIGN_SPE
 - One real confirmed Devnet transfer (blocked on faucet funding).
 - Manual NVDA/TalkBack pass and real 200% browser zoom.
 - Deploy the tested build and verify production; update README with the live signature; demo video.
-- Local git cannot run here ("dubious ownership": the `.git` folder is owned by another Windows account) and the repo has no commits.
+- No git remote is configured; commits are local only.
 
 ## Known limits
 
