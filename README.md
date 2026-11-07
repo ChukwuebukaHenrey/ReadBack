@@ -1,30 +1,39 @@
 # Readback
 
-An accessibility-first Solana Devnet gateway with keyboard and screen-reader navigation, clear transaction readbacks, and human-approved payments.
+An accessibility-first Solana Devnet gateway, built with React, TypeScript and Vite. AI interprets requests; deterministic code checks supported actions; the person stays in control.
 
-Built for a Solana hackathon using React, TypeScript and Vite. The interface uses the supplied Readback brand assets and provides deterministic navigation, plain-language learning and an optional server-side Groq intent interpreter. Wallet and payment milestones are being built; no balances or transactions are fabricated. AI cannot sign, approve or provide transaction data.
+[Open Readback](https://readback-two.vercel.app) · [Workspace](https://readback-two.vercel.app/#app)
 
-## Run
+## Available now
 
-Use Node 22.12+ and npm. On Windows where PowerShell blocks npm.ps1, use `npm.cmd`.
+- A browser-local disposable Devnet wallet with non-extractable Ed25519 keys stored in IndexedDB, real balance reads, address copy and faucet links.
+- Saved contacts with complete-address review, independent verification, a last-four check, duplicate protection, rename and removal.
+- Keyboard and screen-reader-oriented navigation: Where am I, What can I do, Go back and Repeat. Repeat only repeats text.
+- Plain-language Web3 learning and an optional server-side Groq interpreter. Direct navigation works without AI.
+- The supplied portrait design: orange hero, centered person, oversized Readback lettering behind the portrait, dark mission and feature sections. All meaningful content is real HTML.
 
-```
+Payments, transaction history and voice input are still being implemented. No transfer has been verified. No balances, confirmations or accessibility statistics are fabricated. This prototype is Devnet-only and has no wallet recovery; never use real funds.
+
+## Develop
+
+Use Node 22.12+ and npm. Windows PowerShell users can use `npm.cmd`.
+
+```sh
 npm install
 npm run dev
-npm run typecheck
-npm run lint
-npm test
-npm run build
+npm run check
 ```
 
-Navigation works offline: type “Where am I?”, “What can I do?”, “Go back”, “Repeat”, “Check balance”, or “Explore Web3”. Direct buttons provide the same navigation without a language model. Repeat only repeats text; back only changes views. Unrecognized requests never authorize anything.
+The landing page is at `/`; the workspace is at `/#app`. Vite development adapters serve both `/api/intent` and the restricted read-only `/api/devnet` relay. Vercel serves the corresponding Node functions.
 
-The landing page is at `/`; the workspace is at `/#app`. Semantic landmarks, visible focus, page-heading focus and persistent status announcements are implemented. Headless Edge checks passed for keyboard navigation/back/learning, heading focus, page titles, 320px reflow and 44px button targets. Manual NVDA, 200% zoom and axe checks remain pending; no WCAG conformance is claimed.
+Copy `.env.example` to `.env.local`. Set `GROQ_API_KEY` server-side, never in a `VITE_` variable. Set Production and Preview values separately in Vercel. The interpreter receives only the typed request after explicit opt-in. Its strict schema contains navigation actions and learning topics, never addresses, keys, balances, fees or signing instructions. Distributed API abuse limits remain future work.
 
-Copy `.env.example` to `.env.local` and configure `GROQ_API_KEY` there to enable optional AI interpretation. `npm run dev` serves both Vite and `/api/intent` through a local adapter; Vercel serves the same handler as a Node.js function. Production/preview keys belong in Vercel project environment settings. Secrets are never prefixed with `VITE_`. `.env.txt` is also ignored. Direct controls and local commands work without an AI key or network.
+## Accessibility and verification
 
-Groq receives only the submitted request after the user opts in. Server and client validate a strict action/topic schema. No keys, balances, contacts or transaction instructions are sent to the model. The API has input/output bounds, timeout and safe error handling. It is a hackathon prototype; distributed abuse limits are not yet implemented.
+Semantic landmarks, native controls, visible focus, heading focus after navigation, status announcements and reduced-motion handling are implemented. Workspace supporting copy and controls use a minimum 14px type size.
 
-Validation: production build, TypeScript, ESLint and 13 Vitest tests passed using locally available packages; a clean registry install still needs verification. Live Groq access was blocked by the local environment's network policy. No live payment or deployment is claimed until verified.
+The portrait page has been exercised in headless Edge at 320, 390, 768, 1024 and 1440px with no horizontal content overflow. Link and disclosure targets are at least 44px high. Keyboard skip/disclosure controls and 200%-equivalent viewport reflow passed. Axe reported zero violations for its WCAG A/AA rules, with gradient contrast flagged for additional review. These checks are not WCAG certification or disabled-user validation. Manual NVDA/TalkBack and actual browser-zoom testing remain pending.
 
-Next: M2, browser-local disposable Ed25519 signer persistence and real Devnet balance. Read `AGENTS.md`, `codex.md`, and `DESIGN_SPEC.md` for the full contract. Inngest, mainnet, staking and swaps are outside this MVP.
+GitHub main deploys through Vercel, whose build runs ESLint, Vitest and TypeScript before bundling. The current local environment cannot download missing Solana packages, so full integration builds run on Vercel; local focused tests and lint are also used.
+
+Read `AGENTS.md`, `codex.md`, `DESIGN_SPEC.md` and the supplied research brief for the project constraints. Mainnet, swaps, staking, production custody and Inngest are outside this MVP.
