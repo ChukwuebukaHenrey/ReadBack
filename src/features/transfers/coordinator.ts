@@ -4,7 +4,7 @@ import { formatSol } from '../wallet/amount';
 
 export type Candidate = Readonly<{
   sender: string; recipient: string; contactId: string; contactName: string; verifiedAt: string;
-  amount: bigint; fee: bigint; balanceAfter: bigint; instructionsBytes: string;
+  amount: bigint; fee: bigint; balanceAfter: bigint; instructionsBytes: string; consentReceipt: string;
   lastValidBlockHeight: bigint; message: unknown;
 }>;
 export type Proposal = Readonly<Omit<Candidate, 'message' | 'lastValidBlockHeight'> & { id: string; network: 'devnet'; readbackText: string; maxFee: bigint }>;
@@ -21,7 +21,7 @@ export interface TransferPorts {
 }
 
 export function paymentReadback(c: Candidate): string {
-  return `Devnet test payment. Send ${formatSol(c.amount)} SOL to ${c.contactName}, saved contact, address ending ${c.recipient.slice(-4)}. Network fee ${formatSol(c.fee)} SOL. Estimated balance after: ${formatSol(c.balanceAfter)} SOL. Simulation passed, but does not guarantee confirmation. Maximum approved network fee: ${formatSol(c.fee)} SOL.`;
+  return `Devnet test payment. Send ${formatSol(c.amount)} SOL to ${c.contactName}, saved contact, address ending ${c.recipient.slice(-4)}. Network fee ${formatSol(c.fee)} SOL. Estimated balance after: ${formatSol(c.balanceAfter)} SOL. Simulation passed, but does not guarantee confirmation. Maximum approved network fee: ${formatSol(c.fee)} SOL. A consent receipt, a fingerprint of this approval, will be recorded on-chain with the payment.`;
 }
 export function assertUnchanged(proposal: Proposal, next: Candidate) {
   if (next.sender !== proposal.sender || next.recipient !== proposal.recipient || next.contactId !== proposal.contactId || next.contactName !== proposal.contactName || next.verifiedAt !== proposal.verifiedAt || next.amount !== proposal.amount || next.instructionsBytes !== proposal.instructionsBytes || next.fee !== proposal.fee || next.fee > proposal.maxFee || next.balanceAfter !== proposal.balanceAfter) {

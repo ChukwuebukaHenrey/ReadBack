@@ -19,6 +19,10 @@ import { availableActionsText } from './capabilityRegistry';
 import { explainRefusal, refusalTemplate, type RefusalFact } from './lib/refusals';
 import { SettingsPanel } from './features/settings/SettingsPanel';
 import { HeaderWallet } from './features/wallet/HeaderWallet';
+import { useIncomingPayments } from './features/wallet/IncomingWatcher';
+import { readLedger } from './features/transfers/ledger';
+import { loadWallet } from './features/wallet/service';
+import { explainEntry } from './features/activity/explain';
 import { loadSpeech, saveSpeech, speak, type SpeechSettings } from './lib/speech';
 
 const viewIcons: Record<View, IconName> = { home: 'home', wallet: 'wallet', contacts: 'contacts', transfer: 'send', activity: 'activity', learn: 'learn', settings: 'settings' };
@@ -61,6 +65,7 @@ export function App() {
   const navigate = (view: View) => act({ type: 'navigate', view });
 
   const announce = useCallback((text: string) => { setAssistantMessage(text); setStatusRevision(n => n + 1); }, []);
+  const incoming = useIncomingPayments(announce);
   async function refuse(reason: RefusalFact['reason'], signal: AbortSignal) {
     const fact: RefusalFact = { reason, limit: '0.5' };
     setRefusal(refusalTemplate(fact)); setSlots(undefined); setFollowups(0); setAssistantMessage('');
@@ -95,6 +100,16 @@ export function App() {
     setSlots(undefined); setFollowups(0);
     if (intent.action === 'unsupported') { await refuse('unsupported', signal); return; }
     if (intent.action === 'help') { announce(availableActionsText()); return; }
+    if (intent.action === 'explain_last') {
+      dispatch({ type: 'navigate', view: 'activity' });
+      const [records, wallet] = await Promise.all([readLedger(), loadWallet()]);
+      const latest = records.filter(e => e.sender === wallet?.address).sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+      if (signal.aborted) return;
+      if (!latest) { announce('No payments yet, so there is nothing to explain. Try “Send 0.1 SOL to Mum”.'); return; }
+      const text = await explainEntry(latest, useAI, signal);
+      if (!signal.aborted) announce(text);
+      return;
+    }
     const view = intentViews[intent.action];
     if (view) {
       if (view === 'learn') setSelectedTopic(intent.topic ?? 'solana');
@@ -138,13 +153,13 @@ export function App() {
       <nav className="app-nav" aria-label="Main navigation"><p className="nav-label">YOUR WORKSPACE</p>{(Object.entries(views) as [View, string][]).map(([view, label]) => <button key={view} aria-current={state.view === view ? 'page' : undefined} onClick={() => navigate(view)}><Icon name={viewIcons[view]} size={20} />{view === 'wallet' ? 'Wallet' : label}</button>)}<div className="nav-note"><Icon name="shield" size={24} /><p>AI interprets.<br />You stay in control.</p><span>Devnet prototype</span></div></nav>
       <main id="main" tabIndex={-1} className="app-main"><div className="breadcrumb">Workspace <span aria-hidden="true">/</span> {views[state.view]}</div>
         <div className="view-heading"><div><p className="eyebrow">{state.view === 'home' ? 'A LITTLE CLARITY GOES A LONG WAY' : 'SOLANA, AT YOUR PACE'}</p><h1 ref={heading} tabIndex={-1}>{state.view === 'home' ? <>What would you<br />like to do?</> : views[state.view]}</h1></div><img className="workspace-mark" src="/assets/readback-mark.png" width="128" height="128" alt="" /></div>
-        {state.view === 'home' && <><WalletPanel announce={announce} /><DailyLimitSummary /></>}
+        {state.view === 'home' && <><WalletPanel announce={announce} /><DailyLimitSummary />{incoming && <p className="wallet-warning"><strong>Latest incoming payment:</strong> {incoming}</p>}</>}
         {state.view === 'home' && <><p className="intro">Your next step starts here. Choose an action or type a request.</p><div className="home-actions">{(['wallet', 'transfer', 'activity', 'learn'] as View[]).map((view, index) => <button key={view} onClick={() => navigate(view)}><div className="action-top"><Icon name={viewIcons[view]} size={26} /><span className="action-number" aria-hidden="true">0{index + 1}</span></div><span className="action-title">{view === 'wallet' ? 'Check balance' : views[view]}</span><span className="action-description">{actionCopy[view]}</span><Icon name="arrow" size={20} /></button>)}</div></>}
         {state.view === 'home' && <ActivityPanel announce={announce} compact />}
         {state.view === 'wallet' && <WalletPanel announce={announce} />}
         {state.view === 'contacts' && <ContactsPanel announce={announce} />}
         {state.view === 'transfer' && <TransferPanel key={draft?.requestId ?? 'manual'} draft={draft} announce={announce} />}
-        {state.view === 'activity' && <ActivityPanel announce={announce} />}
+        {state.view === 'activity' && <ActivityPanel announce={announce} useAI={useAI} />}
         {state.view === 'settings' && <SettingsPanel speech={speech} onSpeechChange={next => { setSpeech(next); saveSpeech(next); }} announce={announce} />}
         {state.view === 'learn' && <section className="learning" aria-label="Learning topics"><p className="intro">A few clear explanations to get you started. Learning never executes transactions.</p>{topics.map(topic => <details key={topic.id} open={selectedTopic === topic.id} onToggle={event => { if (event.currentTarget.open) setSelectedTopic(topic.id); else setSelectedTopic(current => current === topic.id ? null : current); }}><summary>{topic.title}</summary><p>{topic.text}</p></details>)}</section>}
         <section className="request panel" aria-labelledby="request-heading"><div className="section-label"><Icon name="keyboard" size={22} /><span>YOUR CONTEXT ASSISTANT</span></div><h2 id="request-heading">A question is a good place to start.</h2><form onSubmit={event => { event.preventDefault(); void submitRequest(); }}><label htmlFor="request">Type a request</label><div className="input-row"><input id="request" value={request} onChange={event => setRequest(event.target.value)} aria-describedby="request-help" required maxLength={300} autoComplete="off" placeholder="Where am I? What can I do?" /><button className="primary" type="submit">{pending ? 'New request' : 'Submit request'}<Icon name="arrow" size={18} /></button></div><p id="request-help" className="field-help">Try “Check balance” or “Explore Web3”. Local commands always work without AI.</p><label className="checkbox-label"><input type="checkbox" checked={useAI} onChange={event => { setUseAI(event.target.checked); if (!event.target.checked) { controller.current?.abort(); controller.current = null; setPending(false); setAssistantMessage('Assistant off. Local navigation is available.'); } }} />Use Groq for requests that local commands don’t recognize</label><p className="privacy-note">When enabled, your typed request, missing-field flags and fixed refusal facts may be sent to Groq. Your saved contact list is never sent. Don’t include secrets or private information. AI cannot approve payments.</p></form><div role="alert" aria-atomic="true">{refusal && <p className="error-message">{refusal}</p>}</div>{pending && <button onClick={() => { controller.current?.abort(); controller.current = null; setPending(false); setAssistantMessage('Request canceled.'); }}>Cancel request</button>}</section>

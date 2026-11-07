@@ -1,5 +1,5 @@
 import {
-  address, appendTransactionMessageInstructions, compileTransaction, createSolanaRpc,
+  address, appendTransactionMessageInstructions, compileTransaction,
   createTransactionMessage, getBase64Decoder, getBase64EncodedWireTransaction,
   getSignatureFromTransaction, pipe, setTransactionMessageFeePayerSigner,
   getBase64Encoder, getTransactionDecoder, isSolanaError, SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
@@ -8,28 +8,21 @@ import {
 } from '@solana/kit';
 import { getTransferSolInstruction } from '@solana-program/system';
 import { listContacts } from '../contacts/service';
-import { paymentSigner, GENESIS_HASH } from '../wallet/service';
-import { validateCompiledTransfer } from './instruction';
+import { paymentSigner } from '../wallet/service';
+import { devnetRpc, verifiedDevnetRpc } from '../../lib/devnet';
+import { consentReceipt, consentStatement, receiptInstruction, validateCompiledTransfer } from './instruction';
+import { formatSol } from '../wallet/amount';
 import { checkDailyLimit, MAX_FEE } from './policy';
 import { readLedger, reservePayment, spentToday, updatePayment } from './ledger';
 import { createTransferCoordinator, type Candidate, type PaymentResult } from './coordinator';
 
-function rpc() {
-  const configured = import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
-  if (configured.replace(/\/$/, '') !== 'https://api.devnet.solana.com') throw new Error('Only Solana Devnet is allowed. Nothing was sent.');
-  return createSolanaRpc(new URL('/api/devnet', window.location.origin).href);
-}
-async function verifiedRpc() {
-  const client = rpc();
-  const hash = await client.getGenesisHash().send({ abortSignal: AbortSignal.timeout(12000) });
-  if (hash !== GENESIS_HASH) throw new Error('Network verification failed. This is not Solana Devnet. Nothing was signed.');
-  return client;
-}
-function buildMessage(signer: KeyPairSigner, recipient: string, amount: bigint, lifetime: TransactionBlockhashLifetime) {
+const rpc = devnetRpc;
+const verifiedRpc = verifiedDevnetRpc;
+function buildMessage(signer: KeyPairSigner, recipient: string, amount: bigint, receipt: string, lifetime: TransactionBlockhashLifetime) {
   return pipe(createTransactionMessage({ version: 0 }),
     m => setTransactionMessageFeePayerSigner(signer, m),
     m => setTransactionMessageLifetimeUsingBlockhash(lifetime, m),
-    m => appendTransactionMessageInstructions([getTransferSolInstruction({ source: signer, destination: address(recipient), amount })], m));
+    m => appendTransactionMessageInstructions([getTransferSolInstruction({ source: signer, destination: address(recipient), amount }), receiptInstruction(receipt)], m));
 }
 const messages = new WeakMap<Candidate, ReturnType<typeof buildMessage>>();
 
@@ -108,9 +101,10 @@ async function prepare(contactId: string, amount: bigint): Promise<Candidate> {
     client.getLatestBlockhash({ commitment: 'confirmed' }).send({ abortSignal }),
   ]);
   if (balance.value <= amount) throw new Error('Your balance must cover both the payment and the network fee. Nothing was sent.');
-  const message = buildMessage(signer, contact.address, amount, latest.value);
+  const receipt = await consentReceipt(consentStatement(signer.address, contact.address, formatSol(amount), contact.name));
+  const message = buildMessage(signer, contact.address, amount, receipt, latest.value);
   const unsigned = compileTransaction(message);
-  const instructionsBytes = validateCompiledTransfer(unsigned.messageBytes, signer.address, contact.address, amount);
+  const instructionsBytes = validateCompiledTransfer(unsigned.messageBytes, signer.address, contact.address, amount, receipt);
   const estimate = await client.getFeeForMessage(getBase64Decoder().decode(unsigned.messageBytes) as TransactionMessageBytesBase64, { commitment: 'confirmed' }).send({ abortSignal });
   if (estimate.value === null || estimate.value < 0n || estimate.value > MAX_FEE) throw new Error('A safe network fee could not be verified. Nothing was sent.');
   const fee = estimate.value;
@@ -123,7 +117,7 @@ async function prepare(contactId: string, amount: bigint): Promise<Candidate> {
   const [senderAfter, recipientAfter] = simulated.value.accounts ?? [];
   const expectedAfter = balance.value - amount - fee;
   if (!senderAfter || !recipientAfter || senderAfter.executable || recipientAfter.executable || senderAfter.lamports !== expectedAfter) throw new Error('Simulation balances could not be matched to the payment. Nothing was sent. Refresh and review again.');
-  const candidate: Candidate = Object.freeze({ sender: signer.address, recipient: contact.address, contactId, contactName: contact.name, verifiedAt: contact.verifiedAt, amount, fee, balanceAfter: senderAfter.lamports, instructionsBytes, lastValidBlockHeight: latest.value.lastValidBlockHeight, message });
+  const candidate: Candidate = Object.freeze({ sender: signer.address, recipient: contact.address, contactId, contactName: contact.name, verifiedAt: contact.verifiedAt, amount, fee, balanceAfter: senderAfter.lamports, instructionsBytes, consentReceipt: receipt, lastValidBlockHeight: latest.value.lastValidBlockHeight, message });
   messages.set(candidate, message);
   return candidate;
 }
@@ -142,9 +136,9 @@ export const transfers = createTransferCoordinator({
     await verifiedRpc();
     const current = (await listContacts()).find(c => c.id === candidate.contactId);
     if (!current || current.address !== candidate.recipient || current.name !== candidate.contactName || current.verifiedAt !== candidate.verifiedAt) throw new Error('The saved contact changed. Review again.');
-    if (validateCompiledTransfer(compileTransaction(message).messageBytes, candidate.sender, candidate.recipient, candidate.amount) !== candidate.instructionsBytes) throw new Error('Payment instructions changed. Nothing was signed.');
+    if (validateCompiledTransfer(compileTransaction(message).messageBytes, candidate.sender, candidate.recipient, candidate.amount, candidate.consentReceipt) !== candidate.instructionsBytes) throw new Error('Payment instructions changed. Nothing was signed.');
     const signed = await signTransactionMessageWithSigners(message);
-    validateCompiledTransfer(signed.messageBytes, candidate.sender, candidate.recipient, candidate.amount);
+    validateCompiledTransfer(signed.messageBytes, candidate.sender, candidate.recipient, candidate.amount, candidate.consentReceipt);
     messages.delete(candidate);
     return { signature: getSignatureFromTransaction(signed), wire: getBase64EncodedWireTransaction(signed) };
   },

@@ -30,6 +30,9 @@ async function mockNetwork(page: Page, options: { failSimulation?: boolean; wron
         result = getSignatureFromTransaction(getTransactionDecoder().decode(Buffer.from(params[0], 'base64'))); break;
       }
       case 'getSignatureStatuses': { statusChecks++; const unseen = options.uncertain || options.expired || statusChecks <= (options.slowConfirm ?? 0); result = { context: { slot: 101 }, value: params[0].map(() => unseen ? null : { slot: 101, confirmations: 1, err: null, confirmationStatus: 'confirmed' }) }; break; }
+      case 'getSignaturesForAddress': result = []; break;
+      case 'getAccountInfo': result = { context: { slot: 100 }, value: null }; break;
+      case 'getTransaction': result = null; break;
       case 'getBlockHeight': result = options.expired ? 999_999 : 100; break;
       default: throw new Error(`Unexpected RPC: ${method}`);
     }
@@ -218,4 +221,18 @@ test('header shows wallet, settings default speech off, reset requires explicit 
   await page.getByRole('button', { name: 'Delete wallet' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Demo wallet deleted' })).toBeVisible();
   await expect(page.getByRole('banner').getByText(/Wallet address ending/)).toHaveCount(0);
+});
+test('lookalike address of a saved contact needs a second explicit confirmation', async ({ page }) => {
+  await mockNetwork(page); await setup(page);
+  const poisoned = recipient.slice(0, 4) + '2'.repeat(recipient.length - 8) + recipient.slice(-4);
+  await page.getByRole('button', { name: 'Saved contacts', exact: true }).click();
+  await page.getByLabel('Contact name', { exact: true }).fill('Mum two');
+  await page.getByLabel('Paste the recipient’s full Solana address').fill(poisoned);
+  await page.getByRole('button', { name: 'Review contact address' }).click();
+  await expect(page.getByRole('list', { name: 'Address safety check' })).toContainText('address poisoning');
+  await page.getByLabel('Type the last four characters of the address').fill(poisoned.slice(-4));
+  await page.getByLabel('I checked the full address').check();
+  await expect(page.getByRole('button', { name: 'Save verified contact' })).toBeDisabled();
+  await page.getByLabel('I read the warning above').check();
+  await expect(page.getByRole('button', { name: 'Save verified contact' })).toBeEnabled();
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createTransferCoordinator, type Candidate, type TransferPorts } from './coordinator';
 function fixture() {
-  const candidate: Candidate = { sender: 'sender', recipient: 'recipientABCD', contactId: 'mum', contactName: 'Mum', verifiedAt: '2026-11-07', amount: 200_000_000n, fee: 5000n, balanceAfter: 799_995_000n, instructionsBytes: 'fixed-terms', lastValidBlockHeight: 100n, message: {} };
+  const candidate: Candidate = { sender: 'sender', recipient: 'recipientABCD', contactId: 'mum', contactName: 'Mum', verifiedAt: '2026-11-07', amount: 200_000_000n, fee: 5000n, balanceAfter: 799_995_000n, instructionsBytes: 'fixed-terms', consentReceipt: 'readback:v1:' + '0'.repeat(64), lastValidBlockHeight: 100n, message: {} };
   const order: string[] = [];
   const ports: TransferPorts = {
     prepare: vi.fn().mockResolvedValue(candidate), reserve: vi.fn(async () => { order.push('reserve'); }),

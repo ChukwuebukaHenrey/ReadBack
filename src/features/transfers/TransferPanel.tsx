@@ -95,6 +95,7 @@ export function TransferPanel({ draft, announce }: { draft?: TransferDraft; anno
         {result ? <>
           <p>{result.status === 'confirmed' ? `${formatSol(proposal.amount)} SOL sent to ${proposal.contactName} on Devnet.` : result.message}</p>
           <p className="wallet-address">{result.signature}</p>
+          {result.status === 'confirmed' && <p>Consent receipt recorded on-chain: <span className="wallet-address">{proposal.consentReceipt}</span></p>}
           <a href={`https://explorer.solana.com/tx/${result.signature}?cluster=devnet`} target="_blank" rel="noreferrer">View this payment on Solana Explorer (new tab)</a>
           <div className="wallet-actions">{result.status === 'pending' && <button disabled={busy} onClick={() => void check()}>Check confirmation</button>}<button disabled={busy} onClick={close}>Done</button></div>
         </> : <>

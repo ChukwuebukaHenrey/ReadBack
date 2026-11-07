@@ -14,6 +14,7 @@
     "check": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
+    "@solana-program/memo": "0.16.0",
     "@solana-program/system": "0.16.0",
     "@solana/kit": "8.6.0",
     "@solana/kit-plugin-rpc": "0.19.0",

@@ -3,8 +3,10 @@ import { readLedger, type LedgerEntry } from '../transfers/ledger';
 import { refreshPaymentStatuses, resendSamePayment } from '../transfers/service';
 import { loadWallet } from '../wallet/service';
 import { formatSol } from '../wallet/amount';
+import { explainEntry } from './explain';
 
-export function ActivityPanel({ announce, compact = false }: { announce: (text: string) => void; compact?: boolean }) {
+export function ActivityPanel({ announce, compact = false, useAI = false }: { announce: (text: string) => void; compact?: boolean; useAI?: boolean }) {
+  const [explanation, setExplanation] = useState<{ id: string; text: string } | null>(null);
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -25,6 +27,13 @@ export function ActivityPanel({ announce, compact = false }: { announce: (text: 
     } catch (error) { setError(error instanceof Error ? error.message : 'The network could not be reached. Do not repeat a payment whose outcome is unknown.'); }
     finally { setBusy(false); }
   }
+  async function explain(entry: LedgerEntry) {
+    if (busy) return;
+    setBusy(true); setError('');
+    try { const text = await explainEntry(entry, useAI, AbortSignal.timeout(15000)); setExplanation({ id: entry.id, text }); announce(text); }
+    catch { setError('This payment could not be explained right now. Its details above are unchanged.'); }
+    finally { setBusy(false); }
+  }
   const visible = compact ? entries.slice(0, 3) : entries;
   return <section className="panel" aria-label="Payment activity">
     {compact && <h2>Recent activity</h2>}
@@ -38,6 +47,8 @@ export function ActivityPanel({ announce, compact = false }: { announce: (text: 
       {entry.signature && <><p className="wallet-address">{entry.signature}</p><a href={`https://explorer.solana.com/tx/${entry.signature}?cluster=devnet`} target="_blank" rel="noreferrer">View payment to {entry.name} on Solana Explorer (new tab)</a></>}
       {!['confirmed', 'failed'].includes(entry.status) && <p>Do not send a replacement while the outcome is unresolved.</p>}
       {!compact && entry.signature && ['submitted', 'submission_unknown'].includes(entry.status) && <button disabled={busy} onClick={() => void refresh(entry.id)}>Retry the same signed payment</button>}
+      {!compact && <button disabled={busy} onClick={() => void explain(entry)}>Explain payment to {entry.name}</button>}
+      {explanation?.id === entry.id && <p className="readback-text">{explanation.text}</p>}
     </li>)}</ul>
     {error && <p role="alert" className="error-message">{error}</p>}
   </section>;

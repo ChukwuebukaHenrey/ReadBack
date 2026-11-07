@@ -34,6 +34,7 @@ export function fallbackIntent(input: string, slots?: Slots): Intent | null {
   if (/^(?:balance|check balance|what(?:'s| is) my balance)$/i.test(text)) return { action: 'balance' };
   if (/^(?:contacts|list contacts|saved contacts)$/i.test(text)) return { action: 'list_contacts' };
   if (/^(?:activity|recent activity)$/i.test(text)) return { action: 'activity' };
+  if (/^(?:explain(?: my)? last(?: payment| transaction)?|what did i (?:just )?send)$/i.test(text)) return { action: 'explain_last' };
   if (/^what can i do$/i.test(text)) return { action: 'what_can_i_do' };
   if (/^where am i$/i.test(text)) return { action: 'where_am_i' };
   if (/^repeat$/i.test(text)) return { action: 'repeat' };

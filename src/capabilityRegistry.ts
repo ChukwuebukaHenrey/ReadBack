@@ -9,7 +9,7 @@ export const capabilityRegistry = {
   repeat: { label: 'Repeat the last announcement', available: true },
   help: { label: 'Get help with a request', available: true },
   go_back: { label: 'Go back without authorizing a payment', available: true },
-  explain_last: { label: 'AI transaction explanations are not available yet', available: false },
+  explain_last: { label: 'Explain your last payment in plain words', available: true },
   unsupported: { label: 'Unsupported request', available: false },
 } as const;
 export type CapabilityId = keyof typeof capabilityRegistry;

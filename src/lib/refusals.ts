@@ -10,7 +10,10 @@ export function refusalTemplate(fact: RefusalFact) {
   }
 }
 export function checkedExplanation(text: string, fact: RefusalFact): string {
-  const template = refusalTemplate(fact);
+  return checkedText(text, fact, refusalTemplate(fact));
+}
+/** G16: every number in AI text must appear in the facts or the fixed template; otherwise use the template. */
+export function checkedText(text: string, fact: object, template: string): string {
   const numbers = /-?\d+(?:\.\d+)?|\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|half|quarter|hundred|thousand|million|billion)\b/gi;
   const allowed = new Set((JSON.stringify(fact) + ' ' + template).toLowerCase().match(numbers) ?? []);
   if (!text.trim() || text.length > 350 || /[<>]|https?:/i.test(text) || (text.toLowerCase().match(numbers) ?? []).some(n => !allowed.has(n))) return template;
