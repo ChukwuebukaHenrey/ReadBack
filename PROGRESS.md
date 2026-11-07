@@ -1,5 +1,7 @@
 # Build status — portrait design revision
 
+Brand correction: the header/footer and oversized hero word use the supplied readback-wordmark.png artwork, with SVG viewports preserving identical lettering. Onest is now self-hosted (Google Fonts, SIL Open Font License included), replacing the unintended system-font fallback. Hero artwork is clipped to its own frame and fades into the dark mission section. Button hover/focus/press transitions follow the Motion skill; movement is disabled for reduced-motion preferences.
+
 The user selected Images/file_00000000579c8210b04be65c5023d8e2.png: centered portrait, oversized background lettering and dark editorial sections. Implemented in src/Landing.tsx and src/landing.css using the supplied portrait/mark assets. Removed obsolete introduction styles from src/style.css and raised small workspace copy/control text to at least 14px. Photography is decorative; headings, copy, navigation and disclosures remain semantic HTML. Unsupported reference claims and inactive carousel controls were not reproduced.
 
 ## Implemented milestones

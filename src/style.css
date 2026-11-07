@@ -16,6 +16,9 @@ button:disabled { cursor: wait; opacity: .7; }
 .brand { color: var(--text); text-decoration: none; }
 .brand-lockup { display: inline-flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 650; letter-spacing: -1.2px; white-space: nowrap; }
 .brand-lockup img { object-fit: contain; mix-blend-mode: screen; }
+.brand-lockup svg { display: block; width: 216px; max-width: 100%; height: auto; }
+.brand-fallback { display: none; }
+@media (forced-colors: active) { .brand-lockup svg { display: none; } .brand-fallback { display: inline; } }
 .eyebrow { color: var(--accent); font-size: 14px; font-weight: 650; letter-spacing: 1.7px; margin: 0 0 20px; }
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { line-height: 1.1; font-weight: 550; }

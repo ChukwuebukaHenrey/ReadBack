@@ -20,12 +20,13 @@ export function Landing() {
     <div className="portrait-intro">
       <div className="portrait-backdrop" aria-hidden="true" />
       <header className="portrait-header">
-        <a className="portrait-wordmark" href="#" aria-label="Readback home">Readback</a>
+        <a className="portrait-wordmark" href="#" aria-label="Readback home"><Brand /></a>
         <nav aria-label="Website navigation"><a href="#product">Product</a><a href="#accessibility">Accessibility</a><a href="#principles">Our approach</a><a href="https://github.com/ChukwuebukaHenrey/ReadBack">Resources</a></nav>
         <a className="button outline-light" href="#app">Open Readback <Icon name="arrow" size={17} /></a>
       </header>
-      <div className="hero-backword" aria-hidden="true">Readback</div>
+      <div className="hero-lettering-frame" aria-hidden="true"><svg className="hero-backword" viewBox="610 245 1470 275"><image href="/assets/readback-wordmark.png" width="2172" height="724" /></svg></div>
       <div className="hero-person-frame" aria-hidden="true"><div className="hero-person"><img src="/assets/readback-portrait.png" alt="" width="1076" height="1448" fetchPriority="high" /></div></div>
+      <div className="hero-bottom-fade" aria-hidden="true" />
       <main id="main" tabIndex={-1}>
         <section className="portrait-hero" aria-labelledby="hero-heading">
           <div className="portrait-copy"><p className="hero-eyebrow">SOLANA, FOR DIFFERENT WAYS OF INTERACTING</p><h1 id="hero-heading">A clearer way<br />into Solana.<br />On your terms.</h1><p className="portrait-description">Explore your wallet with clear words, familiar controls and screen-reader-friendly navigation.</p><div className="portrait-actions"><a className="button hero-primary" href="#app">Try Readback <Icon name="arrow" size={18} /></a><a className="button outline-light" href="#product">See how it works <span aria-hidden="true">▷</span></a></div><p className="portrait-network">Devnet prototype · Test funds only</p></div>
