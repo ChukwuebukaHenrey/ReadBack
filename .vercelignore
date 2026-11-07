@@ -1,0 +1,7 @@
+.env*
+!.env.example
+Images/
+.git/
+node_modules/
+PROGRESS.md
+BLOCKED_ON_USER.md
