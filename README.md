@@ -13,6 +13,7 @@ An accessibility-first Solana Devnet gateway, built with React, TypeScript and V
 - The supplied portrait design: orange hero, centered person, oversized Readback lettering behind the portrait, dark mission and feature sections. All meaningful content is real HTML.
 
 - Send SOL to a saved contact: deterministic readback from the decoded transaction, fee and simulation; keyboard-only review dialog; one-shot signing and polled confirmation with an Explorer link. Payment activity and a Settings view (optional app speech, wallet reset).
+- Lookalike-address (address poisoning) warnings when adding contacts, live incoming-payment announcements, an on-chain consent receipt memo on every payment, and plain-language explanations of past payments.
 
 Voice input is not implemented. No live Devnet transfer has been recorded yet; see STATUS_REPORT.md. No balances, confirmations or accessibility statistics are fabricated. This prototype is Devnet-only and has no wallet recovery; never use real funds.
 

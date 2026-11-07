@@ -236,3 +236,15 @@ test('lookalike address of a saved contact needs a second explicit confirmation'
   await page.getByLabel('I read the warning above').check();
   await expect(page.getByRole('button', { name: 'Save verified contact' })).toBeEnabled();
 });
+test('explains the last payment from facts, by button and by typed request', async ({ page }) => {
+  await mockNetwork(page); await setup(page); await openReview(page);
+  await page.getByRole('button', { name: 'Confirm test payment' }).click();
+  await expect(page.getByRole('heading', { name: 'Payment confirmed', exact: true })).toBeVisible({ timeout: 20_000 });
+  await page.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('button', { name: 'Recent activity', exact: true }).click();
+  await page.getByRole('button', { name: 'Explain payment to Mum' }).click();
+  await expect(page.locator('.readback-text')).toHaveText(/^You sent 0\.2 SOL to Mum on Devnet\. Solana Devnet confirmed it\./);
+  await page.getByLabel('Type a request', { exact: true }).fill('explain last payment');
+  await page.getByRole('button', { name: 'Submit request' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'You sent 0.2 SOL to Mum' })).toBeVisible();
+});
