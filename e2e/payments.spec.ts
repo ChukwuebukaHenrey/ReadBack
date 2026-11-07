@@ -248,3 +248,15 @@ test('explains the last payment from facts, by button and by typed request', asy
   await page.getByRole('button', { name: 'Submit request' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'You sent 0.2 SOL to Mum' })).toBeVisible();
 });
+test('landing page: one h1, ordered headings, axe clean and 320px reflow', async ({ page }) => {
+  for (const width of [320, 1280]) {
+    await page.setViewportSize({ width, height: 900 }); await page.goto('/');
+    expect(await page.locator('h1').count()).toBe(1);
+    const levels = await page.locator('main h1, main h2, main h3').evaluateAll(els => els.map(e => Number(e.tagName[1])));
+    levels.reduce((prev, level) => { expect(level - prev).toBeLessThanOrEqual(1); return level; });
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+  await expect(page.getByRole('link', { name: 'Read the SOUPS 2023 study (PDF)' })).toHaveAttribute('href', 'https://arxiv.org/pdf/2306.06261');
+  await expect(page.getByRole('contentinfo')).toContainText('Not audited');
+});
