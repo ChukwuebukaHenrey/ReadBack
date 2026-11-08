@@ -48,8 +48,12 @@ export function App() {
   const statusText = assistantMessage || state.announcement;
   useEffect(() => { speak(statusText, speech); }, [statusText, state.revision, statusRevision, speech]);
 
+  const shownView = useRef(state.view);
   useEffect(() => {
     document.title = `${views[state.view]} · Readback`;
+    // Move focus only when the view changes, never on first load: the skip link and header come first.
+    if (shownView.current === state.view) return;
+    shownView.current = state.view;
     heading.current?.focus();
   }, [state.view]);
   useEffect(() => () => controller.current?.abort(), []);
@@ -147,7 +151,7 @@ export function App() {
   }
 
   return <div className="app">
-    <a className="skip" href="#main">Skip to main content</a>
+    <a className="skip" href="#app" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to main content</a>
     <header className="app-header"><a className="brand" href="#" aria-label="About Readback"><Brand /></a><p className="network"><span className="status-dot" aria-hidden="true" />Devnet <span className="network-divider">/</span> Test funds only</p><HeaderWallet announce={announce} /><a className="header-help" href="#" >About the project <span aria-hidden="true">↗</span></a></header>
     <div className="app-layout">
       <nav className="app-nav" aria-label="Main navigation"><p className="nav-label">YOUR WORKSPACE</p>{(Object.entries(views) as [View, string][]).map(([view, label]) => <button key={view} aria-current={state.view === view ? 'page' : undefined} onClick={() => navigate(view)}><Icon name={viewIcons[view]} size={20} />{view === 'wallet' ? 'Wallet' : label}</button>)}<div className="nav-note"><Icon name="shield" size={24} /><p>AI interprets.<br />You stay in control.</p><span>Devnet prototype</span></div></nav>

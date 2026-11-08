@@ -12,12 +12,13 @@ describe('address poisoning check', () => {
     expect(findLookalikes(real, ['4AKNxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'])).toEqual([]);
   });
   it('requires a second confirmation for lookalikes, programs and unchecked addresses only', () => {
-    const base = { lookalikes: [], isProgram: false, noHistory: false, unchecked: false };
+    const base = { lookalikes: [], isProgram: false, offCurve: false, noHistory: false, unchecked: false };
     expect(needsSecondConfirmation(base)).toBe(false);
     expect(needsSecondConfirmation({ ...base, noHistory: true })).toBe(false);
     expect(needsSecondConfirmation({ ...base, lookalikes: [real] })).toBe(true);
     expect(needsSecondConfirmation({ ...base, isProgram: true })).toBe(true);
     expect(needsSecondConfirmation({ ...base, unchecked: true })).toBe(true);
+    expect(needsSecondConfirmation({ ...base, offCurve: true })).toBe(true);
     expect(riskWarnings({ ...base, lookalikes: [real] })[0]).toContain('ending Dsup');
   });
 });

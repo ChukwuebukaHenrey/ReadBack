@@ -1,4 +1,4 @@
-import { address, signature, type Address } from '@solana/kit';
+import { address, isOffCurveAddress, signature, type Address } from '@solana/kit';
 import { verifiedDevnetRpc } from '../../lib/devnet';
 import { loadWallet } from '../wallet/service';
 import { listContacts } from './service';
@@ -7,6 +7,8 @@ export type AddressRisk = {
   /** Known addresses sharing the first and last four characters but differing in the middle. */
   lookalikes: string[];
   isProgram: boolean;
+  /** Not an Ed25519 public key: no ordinary wallet holds a private key for it. */
+  offCurve: boolean;
   noHistory: boolean;
   /** The network check could not run; treat as unverified. */
   unchecked: boolean;
@@ -24,12 +26,13 @@ export function findLookalikes(candidate: string, known: Iterable<string>): stri
 export function riskWarnings(risk: AddressRisk): string[] {
   const w: string[] = [];
   for (const k of risk.lookalikes) w.push(`Warning: this address starts and ends like another address you have used, ending ${k.slice(-4)}, but the middle is different. This is a common scam called address poisoning. Check every character with the recipient.`);
+  if (risk.offCurve) w.push('Warning: this address cannot belong to an ordinary wallet. No one holds a private key for it, so SOL sent here may never be spendable by a person. Check it with the recipient.');
   if (risk.isProgram) w.push('Warning: this address is a program, not a person’s wallet. Payments to it may be lost.');
   if (risk.noHistory) w.push('Note: this address has no Devnet history yet. That is normal for a new wallet, but check it with the recipient.');
   if (risk.unchecked) w.push('The scam check could not reach Solana Devnet. Verify the full address with the recipient before saving.');
   return w;
 }
-export function needsSecondConfirmation(risk: AddressRisk) { return risk.lookalikes.length > 0 || risk.isProgram || risk.unchecked; }
+export function needsSecondConfirmation(risk: AddressRisk) { return risk.lookalikes.length > 0 || risk.isProgram || risk.offCurve || risk.unchecked; }
 
 async function counterparties(wallet: Address): Promise<string[]> {
   const client = await verifiedDevnetRpc();
@@ -47,6 +50,7 @@ async function counterparties(wallet: Address): Promise<string[]> {
 export async function checkAddressRisk(candidate: string): Promise<AddressRisk> {
   const contacts = (await listContacts()).map(c => c.address);
   let lookalikes = findLookalikes(candidate, contacts);
+  const offCurve = isOffCurveAddress(address(candidate));
   try {
     const wallet = await loadWallet();
     const client = await verifiedDevnetRpc();
@@ -57,8 +61,8 @@ export async function checkAddressRisk(candidate: string): Promise<AddressRisk> 
       wallet ? counterparties(address(wallet.address)) : Promise.resolve([]),
     ]);
     lookalikes = findLookalikes(candidate, [...contacts, ...known]);
-    return { lookalikes, isProgram: Boolean(info.value?.executable), noHistory: history.length === 0, unchecked: false };
+    return { lookalikes, isProgram: Boolean(info.value?.executable), offCurve, noHistory: history.length === 0, unchecked: false };
   } catch {
-    return { lookalikes, isProgram: false, noHistory: false, unchecked: true };
+    return { lookalikes, isProgram: false, offCurve, noHistory: false, unchecked: true };
   }
 }

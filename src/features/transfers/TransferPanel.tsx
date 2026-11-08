@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { listContacts, type Contact } from '../contacts/service';
 import { formatSol } from '../wallet/amount';
 import { transfers, checkPayment } from './service';
+import { spellAddress } from '../../lib/spell';
 import type { Proposal, PaymentResult } from './coordinator';
 
 export type TransferDraft = { contactId: string; amountText: string; requestId: number };
@@ -64,7 +65,7 @@ export function TransferPanel({ draft, announce }: { draft?: TransferDraft; anno
       const outcome = await transfers.confirm(proposal.id, event.nativeEvent);
       if (alive.current) { setDialogMessage(''); setResult(outcome); }
     } catch (error) {
-      if (alive.current) { setError(error instanceof Error ? error.message : 'Payment checks failed. Check Activity before trying again.'); setDialogMessage('This approval is no longer usable. Close and review a new payment.'); }
+      if (alive.current) { setError(error instanceof Error ? error.message : 'Payment checks failed. Check Activity before trying again.'); setDialogMessage('This approval is no longer usable. Close and review a new payment.'); requestAnimationFrame(() => heading.current?.focus()); }
     } finally { inFlight.current = false; if (alive.current) setBusy(false); }
   }
   async function check() {
@@ -86,23 +87,23 @@ export function TransferPanel({ draft, announce }: { draft?: TransferDraft; anno
       <label htmlFor="payment-amount">Amount in SOL</label>
       <input id="payment-amount" inputMode="decimal" type="text" value={amount} onChange={e => setAmount(e.target.value)} disabled={busy} required maxLength={30} aria-describedby="amount-help" />
       <p id="amount-help" className="field-help">Up to 0.5 SOL. Use an exact amount with at most nine decimal places.</p>
-      <button type="submit" className="primary" disabled={!loaded || busy || !contacts.length}>{busy && !proposal ? 'Preparing…' : 'Review payment'}</button>
+      <button type="submit" className="primary" disabled={!loaded || !contacts.length} aria-disabled={busy || undefined}>{busy && !proposal ? 'Preparing…' : 'Review payment'}</button>
       {!proposal && error && <p role="alert" className="error-message">{error}</p>}
     </form>
-    <dialog ref={dialog} className="payment-dialog" aria-labelledby="payment-review-heading" onCancel={e => { e.preventDefault(); close(); }}>
+    <dialog ref={dialog} className="payment-dialog" aria-labelledby="payment-review-heading" aria-describedby={result ? 'payment-result' : 'payment-readback'} onCancel={e => { e.preventDefault(); if (inFlight.current) { setDialogMessage('Sending is in progress and cannot be canceled now. Wait for the result.'); setRevision(n => n + 1); return; } close(); }}>
       {proposal && <>
         <h2 id="payment-review-heading" ref={heading} tabIndex={-1}>{result ? result.status === 'confirmed' ? 'Payment confirmed' : result.status === 'failed' ? 'Payment failed' : 'Confirmation pending' : 'Review Devnet test payment'}</h2>
         {result ? <>
-          <p>{result.status === 'confirmed' ? `${formatSol(proposal.amount)} SOL sent to ${proposal.contactName} on Devnet.` : result.message}</p>
+          <p id="payment-result">{result.status === 'confirmed' ? `${formatSol(proposal.amount)} SOL sent to ${proposal.contactName} on Devnet.` : result.message}</p>
           <p className="wallet-address">{result.signature}</p>
           {result.status === 'confirmed' && <p>Consent receipt recorded on-chain: <span className="wallet-address">{proposal.consentReceipt}</span></p>}
           <a href={`https://explorer.solana.com/tx/${result.signature}?cluster=devnet`} target="_blank" rel="noreferrer">View this payment on Solana Explorer (new tab)</a>
           <div className="wallet-actions">{result.status === 'pending' && <button disabled={busy} onClick={() => void check()}>Check confirmation</button>}<button disabled={busy} onClick={close}>Done</button></div>
         </> : <>
-          <p className="readback-text">{proposal.readbackText}</p>
+          <p id="payment-readback" className="readback-text">{proposal.readbackText}</p>
           <dl className="payment-details"><dt>Recipient</dt><dd>{proposal.contactName} — verified saved contact</dd><dt>Full address</dt><dd className="wallet-address">{proposal.recipient}</dd><dt>Amount</dt><dd>{formatSol(proposal.amount)} SOL</dd><dt>Network fee</dt><dd>{formatSol(proposal.fee)} SOL</dd><dt>Estimated balance after</dt><dd>{formatSol(proposal.balanceAfter)} SOL</dd><dt>Network</dt><dd>Solana Devnet — test funds only</dd></dl>
-          <button disabled={busy} onClick={() => { setDialogMessage(`Full recipient address: ${proposal.recipient.match(/.{1,4}/g)?.join(' ')}.`); setRevision(n => n + 1); }}>Read full address</button>
-          <div className="wallet-actions"><button disabled={busy} onClick={() => { setDialogMessage(proposal.readbackText); setRevision(n => n + 1); }}>Repeat details</button><button className="primary" disabled={busy || !!error} onClick={e => void confirm(e)}>{busy ? 'Sending…' : 'Confirm test payment'}</button><button disabled={busy} onClick={close}>{error ? 'Close review' : 'Cancel'}</button></div>
+          <button disabled={busy} onClick={() => { setDialogMessage(`Full recipient address, spelled with letter case. ${spellAddress(proposal.recipient)}`); setRevision(n => n + 1); }}>Read full address</button>
+          <div className="wallet-actions"><button disabled={busy} onClick={() => { setDialogMessage(proposal.readbackText); setRevision(n => n + 1); }}>Repeat details</button><button className="primary" disabled={!busy && !!error} aria-disabled={busy || undefined} onClick={e => void confirm(e)}>{busy ? 'Sending…' : 'Confirm test payment'}</button><button disabled={busy} onClick={close}>{error ? 'Close review' : 'Cancel'}</button></div>
         </>}
         <p role="status" aria-atomic="true"><span key={revision}>{dialogMessage}</span></p>
         {error && <p role="alert" className="error-message">{error}</p>}

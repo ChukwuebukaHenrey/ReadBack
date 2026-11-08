@@ -28,7 +28,7 @@ export async function interpretRequest(text: string, signal: AbortSignal, slots?
 export function fallbackIntent(input: string, slots?: Slots): Intent | null {
   const text = input.trim().replace(/[?!]+$/, '');
   if (/\b(ignore|override|bypass|confirm|approve|sign|everything|maximum|all funds)\b/i.test(text)) return { action: 'unsupported' };
-  const send = /^send(?:\s+(\S+)\s+sol)?(?:\s+to\s+(.+))?$/i.exec(text);
+  const send = /^send(?:\s+(\d\S*?)(?:\s+sol)?)?(?:\s+to\s+(.+))?$/i.exec(text);
   if (send) return { action: 'send', amountText: send[1], contactName: send[2] };
   if (slots && /^\d+(?:\.\d+)?(?:\s+sol)?$/i.test(text)) return { action: 'send', amountText: text.replace(/\s+sol$/i, '') };
   if (/^(?:balance|check balance|what(?:'s| is) my balance)$/i.test(text)) return { action: 'balance' };

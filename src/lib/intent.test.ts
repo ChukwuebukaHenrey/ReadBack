@@ -25,3 +25,10 @@ describe('intent boundary and offline fallback', () => {
     expect(checkedExplanation('The limit is 0.5 SOL per payment.', fact)).toBe('The limit is 0.5 SOL per payment.');
   });
 });
+describe('offline send phrasing', () => {
+  it('accepts an amount with or without "SOL"', () => {
+    expect(fallbackIntent('send 0.1 to Mum')).toEqual({ action: 'send', amountText: '0.1', contactName: 'Mum' });
+    expect(fallbackIntent('send 0.1 SOL to Mum')).toEqual({ action: 'send', amountText: '0.1', contactName: 'Mum' });
+    expect(fallbackIntent('send to Mum')).toEqual({ action: 'send', amountText: undefined, contactName: 'Mum' });
+  });
+});

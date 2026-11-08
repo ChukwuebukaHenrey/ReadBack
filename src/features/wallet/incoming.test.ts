@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { incomingAnnouncement, incomingFromTransaction } from './incoming';
+import { DUST_LAMPORTS, incomingAnnouncement, incomingFromTransaction } from './incoming';
 
 const wallet = 'WALLET1111111111111111111111111111111111111';
 const sender = 'SENDER11111111111111111111111111111111119F2K';
@@ -15,5 +15,10 @@ describe('incoming payment detection', () => {
   it('names saved contacts and reads unknown senders only by their last four characters', () => {
     expect(incomingAnnouncement(500_000_000n, sender, 'Mum')).toBe('You received 0.5 SOL on Devnet from Mum.');
     expect(incomingAnnouncement(500_000_000n, sender)).toBe('You received 0.5 SOL on Devnet from an unknown address ending 9F2K.');
+  });
+  it('treats tiny payments from strangers as likely address poisoning and never reads their address', () => {
+    const text = incomingAnnouncement(DUST_LAMPORTS - 1n, sender);
+    expect(text).toContain('often scams'); expect(text).not.toContain('9F2K');
+    expect(incomingAnnouncement(1000n, sender, 'Mum')).toBe('You received 0.000001 SOL on Devnet from Mum.');
   });
 });

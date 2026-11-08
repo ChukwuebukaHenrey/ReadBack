@@ -25,39 +25,55 @@ export function incomingFromTransaction(tx: ParsedTx, wallet: string): { from: s
   return from ? { from, lamports: gained } : null;
 }
 
-export function incomingAnnouncement(lamports: bigint, from: string, contactName?: string) {
-  return `You received ${formatSol(lamports)} SOL on Devnet from ${contactName ?? `an unknown address ending ${from.slice(-4)}`}.`;
+/** Below this, an unexpected payment from a stranger is treated as likely address poisoning. */
+export const DUST_LAMPORTS = 1_000_000n;
+export function incomingAnnouncement(lamports: bigint, from?: string, contactName?: string) {
+  if (!contactName && lamports < DUST_LAMPORTS) return `You received a very small payment of ${formatSol(lamports)} SOL from an unknown address. Tiny unexpected payments are often scams that plant a lookalike address in your history. Never copy an address from it.`;
+  const sender = contactName ?? (from ? `an unknown address ending ${from.slice(-4)}` : 'an address Readback could not identify');
+  return `You received ${formatSol(lamports)} SOL on Devnet from ${sender}.`;
 }
 
-async function describeLatest(wallet: string): Promise<string | null> {
+/** Names the sender only if a recent transaction accounts for exactly this balance change. */
+async function describeLatest(wallet: string, gained: bigint): Promise<string> {
   const client = await verifiedDevnetRpc();
   const abortSignal = AbortSignal.timeout(15000);
   const sigs = await client.getSignaturesForAddress(address(wallet), { commitment: 'confirmed', limit: 5 }).send({ abortSignal });
   for (const s of sigs) {
     const tx = await client.getTransaction(signature(s.signature), { commitment: 'confirmed', encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }).send({ abortSignal });
     const found = tx && incomingFromTransaction(tx as unknown as ParsedTx, wallet);
-    if (found) {
+    if (found && found.lamports === gained) {
       const contact = (await listContacts().catch(() => [])).find(c => c.address === found.from);
       return incomingAnnouncement(found.lamports, found.from, contact?.name);
     }
   }
-  return null;
+  return incomingAnnouncement(gained);
 }
 
-/** Subscribes directly to the public Devnet WebSocket; announces balance increases only. */
-export async function watchIncoming(wallet: string, onReceive: (text: string) => void, abortSignal: AbortSignal) {
+async function watchOnce(wallet: string, onReceive: (text: string) => void, abortSignal: AbortSignal, last: { lamports: bigint | null }) {
   const client = await verifiedDevnetRpc();
-  let last = (await client.getBalance(address(wallet), { commitment: 'confirmed' }).send({ abortSignal })).value;
+  const current = (await client.getBalance(address(wallet), { commitment: 'confirmed' }).send({ abortSignal })).value;
+  // A payment that arrived while disconnected is still announced on reconnect.
+  if (last.lamports !== null && current > last.lamports) onReceive(await describeLatest(wallet, current - last.lamports).catch(() => incomingAnnouncement(current - last.lamports!)));
+  last.lamports = current;
   const subscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
   const notifications = await subscriptions.accountNotifications(address(wallet), { commitment: 'confirmed', encoding: 'base64' }).subscribe({ abortSignal });
   for await (const notification of notifications) {
     const lamports = notification.value.lamports;
-    if (lamports > last) {
-      const gained = lamports - last;
-      let text: string | null = null;
-      try { text = await describeLatest(wallet); } catch { /* fall through */ }
-      onReceive(text ?? `You received ${formatSol(gained)} SOL on Devnet.`);
+    if (lamports > last.lamports!) {
+      const gained = lamports - last.lamports!;
+      onReceive(await describeLatest(wallet, gained).catch(() => incomingAnnouncement(gained)));
     }
-    last = lamports;
+    last.lamports = lamports;
+  }
+}
+
+/** Subscribes directly to the public Devnet WebSocket; announces balance increases only. Reconnects with backoff. */
+export async function watchIncoming(wallet: string, onReceive: (text: string) => void, abortSignal: AbortSignal) {
+  const last = { lamports: null as bigint | null };
+  for (let attempt = 0; !abortSignal.aborted; attempt++) {
+    try { await watchOnce(wallet, onReceive, abortSignal, last); attempt = 0; }
+    catch { /* Dropped or unreachable: retry below. */ }
+    if (abortSignal.aborted) return;
+    await new Promise(resolve => setTimeout(resolve, Math.min(60_000, 2_000 * 2 ** Math.min(attempt, 5))));
   }
 }
