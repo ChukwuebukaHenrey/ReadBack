@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isDemo, demoEntries } from '../demo/demo';
 import { checkDailyLimit } from './policy';
 
 const entrySchema = z.object({ id: z.string().uuid(), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), createdAt: z.string().datetime(), amount: z.string().regex(/^[1-9][0-9]*$/), sender: z.string(), recipient: z.string(), name: z.string(), status: z.enum(['reserved', 'submission_unknown', 'submitted', 'confirmed', 'failed']), signature: z.string().optional(), signedWire: z.string().optional(), lastValidBlockHeight: z.string().optional() }).strict();
@@ -13,6 +14,7 @@ function open(): Promise<IDBDatabase> {
   });
 }
 export async function readLedger(): Promise<LedgerEntry[]> {
+  if (isDemo()) return demoEntries();
   const db = await open();
   try { return await new Promise((resolve, reject) => {
     const transaction = db.transaction('ledger', 'readonly');
@@ -22,6 +24,7 @@ export async function readLedger(): Promise<LedgerEntry[]> {
   }); } finally { db.close(); }
 }
 export async function reservePayment(entry: LedgerEntry): Promise<void> {
+  if (isDemo()) throw new Error('Demo payments do not use the real ledger.');
   const checked = entrySchema.parse(entry);
   const db = await open();
   try { await new Promise<void>((resolve, reject) => {

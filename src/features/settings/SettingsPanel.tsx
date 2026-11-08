@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import type { DisplayPrefs } from '../../lib/display';
 import { loadWallet, resetWallet } from '../wallet/service';
 import { readLedger } from '../transfers/ledger';
 import { speak, speechSupported, stopSpeech, type SpeechSettings } from '../../lib/speech';
 
-export function SettingsPanel({ speech, onSpeechChange, announce, useAI, onUseAIChange }: { speech: SpeechSettings; onSpeechChange: (next: SpeechSettings) => void; announce: (text: string) => void; useAI: boolean; onUseAIChange: (enabled: boolean) => void }) {
+export function SettingsPanel({ speech, onSpeechChange, display, onDisplayChange, announce, useAI, onUseAIChange }: { speech: SpeechSettings; onSpeechChange: (next: SpeechSettings) => void; display: DisplayPrefs; onDisplayChange: (next: DisplayPrefs) => void; announce: (text: string) => void; useAI: boolean; onUseAIChange: (enabled: boolean) => void }) {
   const [hasWallet, setHasWallet] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [understood, setUnderstood] = useState(false);
@@ -46,6 +47,12 @@ export function SettingsPanel({ speech, onSpeechChange, announce, useAI, onUseAI
       <h2>Assistant</h2>
       <label className="checkbox-label"><input type="checkbox" checked={useAI} onChange={e => onUseAIChange(e.target.checked)} />Use Groq for requests that local commands don’t recognize</label>
       <p className="field-help">Sends your typed request to Groq. Never your contacts. AI cannot approve payments.</p>
+    </div>
+    <div className="panel">
+      <h2>Display</h2>
+      <label className="checkbox-label"><input type="checkbox" role="switch" checked={display.largeText} onChange={e => onDisplayChange({ ...display, largeText: e.target.checked })} />Larger text</label>
+      <label className="checkbox-label"><input type="checkbox" role="switch" checked={display.contrast} onChange={e => onDisplayChange({ ...display, contrast: e.target.checked })} />High contrast</label>
+      <p className="field-help">Reduced motion follows your device setting.</p>
     </div>
     <div className="panel">
       <h2>Speech</h2>

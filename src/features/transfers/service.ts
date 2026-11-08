@@ -14,7 +14,9 @@ import { consentReceipt, consentStatement, receiptInstruction, validateCompiledT
 import { formatSol } from '../wallet/amount';
 import { checkDailyLimit, MAX_FEE } from './policy';
 import { readLedger, reservePayment, spentToday, updatePayment } from './ledger';
-import { createTransferCoordinator, type Candidate, type PaymentResult } from './coordinator';
+import { createTransferCoordinator, type Candidate, type PaymentResult, type Proposal } from './coordinator';
+import { parseAmount } from './policy';
+import { isDemo, demoContacts, demoBalance, demoEntries, recordDemoPayment, DEMO_ADDRESS } from '../demo/demo';
 
 const rpc = devnetRpc;
 const verifiedRpc = verifiedDevnetRpc;
@@ -32,6 +34,7 @@ const REJECTED_MESSAGE = 'Solana Devnet rejected this payment before processing 
 const STALE_RESERVATION_MS = 2 * 60_000;
 
 export async function checkPayment(id: string): Promise<PaymentResult> {
+  if (isDemo()) { const e = demoEntries().find(x => x.id === id); if (!e) throw new Error('No demo payment found.'); return { status: 'confirmed', signature: e.signature, message: 'Demo payment recorded. Nothing was sent to Solana.' }; }
   const entry = (await readLedger()).find(item => item.id === id);
   if (!entry?.signature) throw new Error('No submitted signature is recorded for this payment.');
   // Confirmed and failed are terminal: never re-query or reinterpret them.
@@ -69,6 +72,7 @@ export async function waitForPayment(id: string, attempts = 20, intervalMs = 150
 }
 
 export async function refreshPaymentStatuses() {
+  if (isDemo()) return readLedger();
   const entries = await readLedger();
   const now = Date.now();
   for (const entry of entries) {
@@ -122,7 +126,7 @@ async function prepare(contactId: string, amount: bigint): Promise<Candidate> {
   return candidate;
 }
 
-export const transfers = createTransferCoordinator({
+const realTransfers = createTransferCoordinator({
   prepare,
   async reserve(p) {
     const now = new Date().toISOString();
@@ -157,6 +161,7 @@ export const transfers = createTransferCoordinator({
 
 /** Explicit recovery only: never rebuild or sign, and never automatically retry a send. */
 export async function resendSamePayment(id: string): Promise<PaymentResult> {
+  if (isDemo()) throw new Error('Demo payments are never sent.');
   const checked = await checkPayment(id);
   if (checked.status !== 'pending') return checked;
   // Explicit, user-initiated resend of the identical signed bytes only.
@@ -173,3 +178,40 @@ export async function resendSamePayment(id: string): Promise<PaymentResult> {
   try { await client.sendTransaction(entry.signedWire as Base64EncodedWireTransaction, { encoding: 'base64', skipPreflight: false, preflightCommitment: 'confirmed', maxRetries: 0n }).send({ abortSignal: AbortSignal.timeout(12000) }); } catch { /* Check the same signature. */ }
   return waitForPayment(id, 10);
 }
+
+/** Demo payments: same amount, limit and contact checks; recorded locally; never signed or sent. */
+const DEMO_FEE = 5000n;
+const demoProposals = new Map<string, Proposal>();
+const demoTransfers = {
+  async prepare(contactId: string, amountText: string): Promise<Proposal> {
+    const amount = parseAmount(amountText);
+    const contact = demoContacts.find(c => c.id === contactId);
+    if (!contact) throw new Error('I only send to saved contacts. Add and independently verify the recipient first.');
+    checkDailyLimit(spentToday(demoEntries(), DEMO_ADDRESS), amount);
+    const balance = demoBalance();
+    if (balance < amount + DEMO_FEE) throw new Error('The demo balance is too low for this amount and the fee. Nothing was sent.');
+    const balanceAfter = balance - amount - DEMO_FEE;
+    const proposal: Proposal = Object.freeze({
+      id: crypto.randomUUID(), network: 'devnet', sender: DEMO_ADDRESS, recipient: contact.address, contactId, contactName: contact.name,
+      verifiedAt: contact.verifiedAt, amount, fee: DEMO_FEE, maxFee: DEMO_FEE, balanceAfter, instructionsBytes: 'demo', consentReceipt: 'demo',
+      readbackText: `Demo payment. Nothing is sent to Solana. Send ${formatSol(amount)} SOL to ${contact.name}, saved contact, address ending ${contact.address.slice(-4)}. Example network fee ${formatSol(DEMO_FEE)} SOL. Demo balance after: ${formatSol(balanceAfter)} SOL.`,
+    });
+    demoProposals.set(proposal.id, proposal);
+    return proposal;
+  },
+  cancel(id: string) { demoProposals.delete(id); },
+  async confirm(id: string, event: { isTrusted: boolean }): Promise<PaymentResult> {
+    if (event.isTrusted !== true) throw new Error('Use the Confirm test payment button with your keyboard or pointer.');
+    const proposal = demoProposals.get(id);
+    if (!proposal) throw new Error('This review is no longer available. Review a new payment.');
+    demoProposals.delete(id);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const entry = recordDemoPayment(proposal.contactId, proposal.amount);
+    return { status: 'confirmed', signature: entry.signature, message: 'Demo payment recorded. Nothing was sent to Solana.' };
+  },
+};
+export const transfers = {
+  prepare: (contactId: string, amountText: string) => (isDemo() ? demoTransfers : realTransfers).prepare(contactId, amountText),
+  cancel: (id: string) => { demoTransfers.cancel(id); realTransfers.cancel(id); },
+  confirm: (id: string, event: { isTrusted: boolean }) => (isDemo() ? demoTransfers : realTransfers).confirm(id, event),
+};

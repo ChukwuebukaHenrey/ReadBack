@@ -4,6 +4,7 @@ import { refreshPaymentStatuses, resendSamePayment } from '../transfers/service'
 import { loadWallet } from '../wallet/service';
 import { formatSol } from '../wallet/amount';
 import { explainEntry } from './explain';
+import { isDemoSignature } from '../demo/demo';
 
 export function ActivityPanel({ announce, compact = false, useAI = false }: { announce: (text: string) => void; compact?: boolean; useAI?: boolean }) {
   const [explanation, setExplanation] = useState<{ id: string; text: string } | null>(null);
@@ -43,7 +44,7 @@ export function ActivityPanel({ announce, compact = false, useAI = false }: { an
     <ul className="activity-list">{visible.map(entry => <li key={entry.id}>
       <h3>{entry.status === 'confirmed' ? 'Confirmed' : entry.status === 'failed' ? 'Failed' : 'Outcome unresolved'} — {formatSol(BigInt(entry.amount))} SOL to {entry.name}</h3>
       <p><time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time> · Solana Devnet</p>
-      {entry.signature && <><p className="wallet-address">{entry.signature}</p><a href={`https://explorer.solana.com/tx/${entry.signature}?cluster=devnet`} target="_blank" rel="noreferrer">View payment to {entry.name} on Solana Explorer (new tab)</a></>}
+      {entry.signature && !isDemoSignature(entry.signature) && <><p className="wallet-address">{entry.signature}</p><a href={`https://explorer.solana.com/tx/${entry.signature}?cluster=devnet`} target="_blank" rel="noreferrer">View payment to {entry.name} on Solana Explorer (new tab)</a></>}
       {!['confirmed', 'failed'].includes(entry.status) && <p>Do not send a replacement while the outcome is unresolved.</p>}
       {!compact && entry.signature && ['submitted', 'submission_unknown'].includes(entry.status) && <button disabled={busy} onClick={() => void refresh(entry.id)}>Retry the same signed payment</button>}
       {!compact && <button disabled={busy} onClick={() => void explain(entry)}>Explain payment to {entry.name}</button>}

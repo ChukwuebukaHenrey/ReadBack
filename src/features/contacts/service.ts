@@ -1,4 +1,5 @@
 import { address } from '@solana/kit';
+import { isDemo, demoContacts } from '../demo/demo';
 import { z } from 'zod';
 import { normalizeName, nameKey } from './names';
 
@@ -29,6 +30,7 @@ function openDatabase(): Promise<IDBDatabase> {
 }
 
 export async function listContacts(): Promise<Contact[]> {
+  if (isDemo()) return demoContacts.map(c => ({ ...c }));
   const db = await openDatabase();
   try {
     const records = await new Promise<unknown[]>((resolve, reject) => {
@@ -47,6 +49,7 @@ export async function listContacts(): Promise<Contact[]> {
 }
 
 export async function saveContact(input: { name: string; address: string; independentlyVerified: boolean; suffix: string }): Promise<Contact> {
+  if (isDemo()) throw new Error('Adding contacts is not available in the demo.');
   if (!input.independentlyVerified) throw new Error('Independently verify the full address before saving.');
   const checked = validateContact(input.name, input.address);
   if ((await listContacts()).some(contact => contact.normalizedName === checked.normalizedName || contact.address === checked.address)) throw new Error('That contact name or address is already saved.');
@@ -69,9 +72,12 @@ async function mutate(action: (store: IDBObjectStore) => IDBRequest): Promise<vo
   } finally { db.close(); }
 }
 
-export async function removeContact(id: string): Promise<void> { await mutate(store => store.delete(id)); }
+export async function removeContact(id: string): Promise<void> {
+  if (isDemo()) throw new Error('Demo contacts cannot be removed.');
+  await mutate(store => store.delete(id)); }
 
 export async function renameContact(id: string, name: string): Promise<void> {
+  if (isDemo()) throw new Error('Demo contacts cannot be renamed.');
   const existing = (await listContacts()).find(contact => contact.id === id);
   if (!existing) throw new Error('That saved contact no longer exists.');
   const checked = validateContact(name, existing.address);

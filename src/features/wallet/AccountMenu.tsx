@@ -4,7 +4,7 @@ import { Avatar } from '../dashboard/Avatar';
 import { spellAddress } from '../../lib/spell';
 
 /** Avatar button → wallet menu. "Leave Readback" returns to the landing page; the wallet stays in this browser. */
-export function AccountMenu({ address, announce, onSettings }: { address: string | null; announce: (text: string) => void; onSettings: () => void }) {
+export function AccountMenu({ address, announce, onSettings, demo = false, onExitDemo }: { address: string | null; announce: (text: string) => void; onSettings: () => void; demo?: boolean; onExitDemo?: () => void }) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
@@ -31,9 +31,9 @@ export function AccountMenu({ address, announce, onSettings }: { address: string
       <p className="rb-menu-addr">{address}</p>
       <button onClick={() => void copy()}><Icon name="copy" size={18} />Copy address</button>
       <button onClick={() => { announce(`Your address, spelled with letter case. ${spellAddress(address)}`); close(); }}><Icon name="speaker" size={18} />Read address</button>
-      <a href={`https://explorer.solana.com/address/${address}?cluster=devnet`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}><Icon name="external" size={18} />View on Explorer<span className="sr-only"> (new tab)</span></a>
+      {!demo && <a href={`https://explorer.solana.com/address/${address}?cluster=devnet`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}><Icon name="external" size={18} />View on Explorer<span className="sr-only"> (new tab)</span></a>}
       <button onClick={() => { setOpen(false); onSettings(); }}><Icon name="settings" size={18} />Settings</button>
-      <a href="#" className="rb-menu-leave"><Icon name="logout" size={18} />Leave Readback</a>
+      {demo ? <button className="rb-menu-leave" onClick={() => { setOpen(false); onExitDemo?.(); }}><Icon name="logout" size={18} />Exit demo</button> : <a href="#" className="rb-menu-leave"><Icon name="logout" size={18} />Leave Readback</a>}
     </div>
   </div>;
 }

@@ -43,6 +43,7 @@ test('blind user journey: keyboard and screen-reader cues only', async ({ page }
   test.setTimeout(120_000);
   await mockDevnet(page); await instrument(page);
   await page.goto('/#app');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
   // Skip link is the first stop and lands in main.
   await page.keyboard.press('Tab');

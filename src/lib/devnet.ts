@@ -1,8 +1,10 @@
 import { createSolanaRpc } from '@solana/kit';
+import { isDemo } from '../features/demo/demo';
 import { GENESIS_HASH } from '../features/wallet/service';
 
 /** Devnet RPC through the restricted same-origin relay. Never another network. */
 export function devnetRpc() {
+  if (isDemo()) throw new Error('Demo mode never contacts Solana.');
   const configured = import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
   if (configured.replace(/\/$/, '') !== 'https://api.devnet.solana.com') throw new Error('Only Solana Devnet is allowed. Nothing was sent.');
   return createSolanaRpc(new URL('/api/devnet', window.location.origin).href);

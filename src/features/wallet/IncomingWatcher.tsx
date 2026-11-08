@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { loadWallet, onWalletChange } from './service';
 import { watchIncoming } from './incoming';
+import { isDemo } from '../demo/demo';
 
 /** Live incoming-payment announcements. Silent if WebSockets are unavailable. */
 export function useIncomingPayments(announce: (text: string) => void) {
@@ -11,7 +12,7 @@ export function useIncomingPayments(announce: (text: string) => void) {
       controller.abort(); controller = new AbortController();
       const { signal } = controller;
       loadWallet().then(wallet => {
-        if (!wallet || signal.aborted) return;
+        if (!wallet || signal.aborted || isDemo()) return;
         return watchIncoming(wallet.address, text => { if (!signal.aborted) { setLatest(text); announce(text); } }, signal);
       }).catch(() => { /* Live announcements are optional; balance refresh still works. */ });
     };

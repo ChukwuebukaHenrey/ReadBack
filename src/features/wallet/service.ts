@@ -1,4 +1,5 @@
 import { createClient, createSignerFromKeyPair, generateKeyPairSigner } from '@solana/kit';
+import { isDemo, DEMO_ADDRESS, demoBalance } from '../demo/demo';
 import type { KeyPairSigner } from '@solana/kit';
 import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
 import { signer } from '@solana/kit-plugin-signer';
@@ -21,6 +22,7 @@ export function onWalletChange(listener: () => void) {
 
 // Used only by the local transaction service; never expose this object to React or the API.
 export async function paymentSigner() {
+  if (isDemo()) throw new Error('The demo cannot sign transactions.');
   const wallet = await loadWallet();
   if (!wallet || !activeSigner) throw new Error('Create or reload your Devnet wallet first.');
   return activeSigner;
@@ -72,6 +74,7 @@ async function validateStored(value: unknown): Promise<PublicWallet> {
 }
 
 export async function loadWallet(): Promise<PublicWallet | null> {
+  if (isDemo()) return { address: DEMO_ADDRESS, createdAt: '2026-11-01T09:00:00.000Z', persistent: true };
   const stored = await readStored();
   if (stored === undefined) { activeSigner = null; return null; }
   try { return await validateStored(stored); }
@@ -79,6 +82,7 @@ export async function loadWallet(): Promise<PublicWallet | null> {
 }
 
 export function createWallet(): Promise<PublicWallet> {
+  if (isDemo()) return Promise.reject(new Error('Leave the demo to create a real test wallet.'));
   if (creation) return creation;
   creation = (async () => {
     const existing = await loadWallet();
@@ -107,6 +111,7 @@ export function createWallet(): Promise<PublicWallet> {
 }
 
 export async function readBalance(wallet: PublicWallet, abortSignal: AbortSignal): Promise<Balance> {
+  if (isDemo()) return { lamports: demoBalance(), slot: 0n, checkedAt: new Date().toISOString() };
   if (!activeSigner || wallet.address !== activeSigner.address) throw new Error('Reload the saved wallet before checking its balance.');
   const configured = import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
   if (configured.replace(/\/$/, '') !== 'https://api.devnet.solana.com') throw new Error('This demo only permits the official Solana Devnet endpoint. No other network was contacted.');
@@ -123,6 +128,7 @@ export async function readBalance(wallet: PublicWallet, abortSignal: AbortSignal
 
 /** Permanently deletes the browser-local Devnet key. Callers must obtain explicit confirmation first. */
 export async function resetWallet(): Promise<void> {
+  if (isDemo()) throw new Error('The demo has no wallet to delete. Use Exit demo.');
   const db = await openDatabase();
   try {
     await new Promise<void>((resolve, reject) => {

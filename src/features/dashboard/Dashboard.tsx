@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Brand } from '../../components/Brand';
 import { Icon, type IconName } from '../../components/Icon';
 import { formatSol } from '../wallet/amount';
 import { WalletPanel } from '../wallet/WalletPanel';
@@ -7,6 +8,10 @@ import type { LedgerEntry } from '../transfers/ledger';
 import type { View } from '../../navigation';
 import type { WalletSummary } from './useWalletSummary';
 import { Avatar } from './Avatar';
+import { Counter } from '../../lib/motion';
+import type { SpeechSettings } from '../../lib/speech';
+import type { DisplayPrefs } from '../../lib/display';
+import { isDemo } from '../demo/demo';
 
 const LOW_BALANCE = 100_000_000n;
 /** Local calendar day, so a payment at 00:30 in Lagos lands on the day the person lived it. */
@@ -20,12 +25,16 @@ const statusTone = (e: LedgerEntry) => e.status === 'confirmed' ? 'ok' : e.statu
 type Props = {
   summary: WalletSummary; incoming: string;
   announce: (text: string) => void; navigate: (view: View) => void;
-  sendTo: (contactId: string) => void; explainLast: () => void;
+  sendTo: (contactId: string) => void; explainLast: () => void; onAsk: (text: string) => void;
+  speech: SpeechSettings; onSpeechChange: (next: SpeechSettings) => void;
+  display: DisplayPrefs; onDisplayChange: (next: DisplayPrefs) => void;
 };
 
-export function Dashboard({ summary, incoming, announce, navigate, sendTo, explainLast }: Props) {
+export function Dashboard({ summary, incoming, announce, navigate, sendTo, explainLast, onAsk, speech, onSpeechChange, display, onDisplayChange }: Props) {
   const { wallet, balance, balanceError, entries, contacts, remainingToday, loaded } = summary;
   const [now] = useState(() => Date.now());
+  const [hidden, setHidden] = useState(false);
+  const [ask, setAsk] = useState('');
   if (!loaded) return <p className="rb-loading">Loading your wallet…</p>;
   if (!wallet) return <div className="rb-onboard"><WalletPanel announce={announce} /></div>;
 
@@ -42,8 +51,8 @@ export function Dashboard({ summary, incoming, announce, navigate, sendTo, expla
     {unresolved.length > 0 && <div className="rb-banner"><Icon name="activity" size={20} /><p>A payment is still being checked. Don’t send it again.</p><button onClick={() => navigate('activity')}>Check status</button></div>}
 
     <section className="rb-balance" aria-labelledby="balance-heading">
-      <div className="rb-balance-head"><h2 id="balance-heading">Total balance</h2><button className="rb-icon-btn" onClick={summary.refresh} aria-label="Refresh balance"><Icon name="refresh" size={18} /></button></div>
-      <p className="rb-balance-value">{balance ? <>{formatSol(balance.lamports)} <span>SOL</span></> : balanceError ? 'Unavailable' : 'Checking…'}</p>
+      <div className="rb-balance-head"><h2 id="balance-heading">Total balance</h2><div className="rb-balance-tools"><button className="rb-icon-btn" onClick={() => setHidden(h => !h)} aria-pressed={hidden} aria-label="Hide balance"><Icon name={hidden ? 'eyeOff' : 'eye'} size={18} /></button><button className="rb-icon-btn" onClick={summary.refresh} aria-label="Refresh balance"><Icon name="refresh" size={18} /></button></div></div>
+      <p className="rb-balance-value">{hidden ? <><span aria-hidden="true">••••••</span><span className="sr-only">Balance hidden</span></> : balance ? <><Counter value={Number(balance.lamports) / 1e9} decimals={Math.min(9, (formatSol(balance.lamports).split('.')[1] ?? '').length)} exact={formatSol(balance.lamports)} /> <span className="rb-unit">SOL</span></> : balanceError ? 'Unavailable' : 'Checking…'}</p>
       <p className="rb-balance-meta"><span className="rb-pill">Devnet</span>{balance && <span>Updated {time(balance.checkedAt)}</span>}</p>
       {balance && balance.lamports < LOW_BALANCE && <a className="rb-faucet-link" href={`https://faucet.solana.com/?address=${wallet.address}`} target="_blank" rel="noreferrer">Get test SOL <span className="sr-only">(opens faucet in a new tab)</span><Icon name="external" size={16} /></a>}
       <ul className="rb-actions">{actions.map(([icon, label, run]) => <li key={label}><button onClick={run}><span className="rb-action-icon" aria-hidden="true"><Icon name={icon} size={22} /></span>{label}</button></li>)}</ul>
@@ -60,12 +69,23 @@ export function Dashboard({ summary, incoming, announce, navigate, sendTo, expla
       <dl className="rb-stat-meta"><div><dt>Confirmed</dt><dd>{confirmedWeek.length}</dd></div><div><dt>Pending</dt><dd>{unresolved.length}</dd></div></dl>
     </section>
 
+    <section className="rb-card rb-assistant" aria-labelledby="assistant-heading">
+      <div className="rb-card-head"><h2 id="assistant-heading"><Icon name="chat" size={22} />Ask Readback</h2></div>
+      <form onSubmit={e => { e.preventDefault(); if (ask.trim()) { onAsk(ask.trim()); setAsk(''); } }}>
+        <label htmlFor="dash-ask" className="sr-only">Ask Readback</label>
+        <input id="dash-ask" value={ask} onChange={e => setAsk(e.target.value)} maxLength={300} placeholder="Send 0.1 SOL to Mum" autoComplete="off" />
+        <button type="submit" className="primary">Ask</button>
+      </form>
+      <ul className="rb-prompts" aria-label="Example requests">{["What's my balance?", 'Explain last payment', 'What can I do?'].map(p => <li key={p}><button onClick={() => onAsk(p)}>{p}</button></li>)}</ul>
+    </section>
+
     <WeekChart entries={entries} />
 
     <section className="rb-card rb-quick" aria-labelledby="quick-heading">
       <h2 id="quick-heading">Quick actions</h2>
       <ul>{([['send', 'Send SOL', 'To a saved contact', () => navigate('transfer')], ['contacts', 'Add contact', 'Verify a new recipient', () => navigate('contacts')], ['chat', 'Explain last payment', 'In plain words', explainLast], ['learn', 'Learn', 'Solana, fees and safety', () => navigate('learn')]] as [IconName, string, string, () => void][]).map(([icon, title, sub, run]) => <li key={title}><button onClick={run}><span className="rb-tile" aria-hidden="true"><Icon name={icon} size={20} /></span><span className="rb-row-text"><strong>{title}</strong><small>{sub}</small></span><Icon name="arrow" size={18} /></button></li>)}</ul>
     </section>
+
 
     <section className="rb-card rb-tx" aria-labelledby="tx-heading">
       <div className="rb-card-head"><h2 id="tx-heading">Transactions</h2><button className="rb-link-btn" onClick={() => navigate('activity')}>View all <span className="sr-only">transactions</span></button></div>
@@ -77,12 +97,25 @@ export function Dashboard({ summary, incoming, announce, navigate, sendTo, expla
       </li>)}</ul>}
     </section>
 
+    <section className="rb-card rb-assets" aria-labelledby="assets-heading">
+      <h2 id="assets-heading">Assets</h2>
+      <ul><li><span className="rb-token" aria-hidden="true">◎</span><span className="rb-row-text"><strong>SOL</strong><small>Solana {isDemo() ? '· demo' : 'Devnet · test funds'}</small></span><span className="rb-amount"><strong>{hidden ? '••••' : balance ? `${formatSol(balance.lamports)} SOL` : '—'}</strong><small>Native token</small></span></li></ul>
+      <p className="rb-assets-note">Token transfers aren’t supported yet.</p>
+    </section>
+
     <aside className="rb-side" aria-label="More">
       <section className="rb-promo" aria-labelledby="promo-heading">
-        <p className="rb-promo-brand"><span aria-hidden="true">◆</span> Readback</p>
+        <p className="rb-promo-brand"><Brand /></p>
         <h2 id="promo-heading">Send test SOL</h2>
         <p>Read back before you confirm.</p>
         <button className="rb-promo-btn" onClick={() => navigate('transfer')}>Send</button>
+      </section>
+      <section className="rb-card rb-a11y" aria-labelledby="a11y-heading">
+        <h2 id="a11y-heading">Accessibility</h2>
+        <label className="rb-switch"><span>App speech</span><input type="checkbox" role="switch" checked={speech.enabled} onChange={e => onSpeechChange({ ...speech, enabled: e.target.checked })} /></label>
+        <label className="rb-switch"><span>Larger text</span><input type="checkbox" role="switch" checked={display.largeText} onChange={e => onDisplayChange({ ...display, largeText: e.target.checked })} /></label>
+        <label className="rb-switch"><span>High contrast</span><input type="checkbox" role="switch" checked={display.contrast} onChange={e => onDisplayChange({ ...display, contrast: e.target.checked })} /></label>
+        <button className="rb-link-btn" onClick={() => navigate('settings')}>More settings</button>
       </section>
       <PaymentCalendar entries={entries} />
       <section className="rb-card rb-contacts" aria-labelledby="contacts-heading">

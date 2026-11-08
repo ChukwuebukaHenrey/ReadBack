@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { motion } from 'motion/react';
+import { durations, ease } from './lib/motion';
 import { capabilities, initialState, parseRequest, reducer, views } from './navigation';
 import type { Action, View } from './navigation';
 import { Brand } from './components/Brand';
@@ -11,6 +13,8 @@ import { WalletPanel } from './features/wallet/WalletPanel';
 import { Dashboard } from './features/dashboard/Dashboard';
 import { useWalletSummary } from './features/dashboard/useWalletSummary';
 import { AccountMenu } from './features/wallet/AccountMenu';
+import { endDemo, isDemo, profileName } from './features/demo/demo';
+import { useDisplayPrefs } from './lib/display';
 import { ContactsPanel } from './features/contacts/ContactsPanel';
 import { listContacts } from './features/contacts/service';
 import { nameKey } from './features/contacts/names';
@@ -46,6 +50,8 @@ export function App() {
   const controller = useRef<AbortController | null>(null);
   const draftCounter = useRef(0);
   const [speech, setSpeech] = useState<SpeechSettings>(loadSpeech);
+  const [display, setDisplay] = useDisplayPrefs();
+  const changeSpeech = (next: SpeechSettings) => { setSpeech(next); saveSpeech(next); };
   const statusText = assistantMessage || state.announcement;
   useEffect(() => { speak(statusText, speech); }, [statusText, state.revision, statusRevision, speech]);
 
@@ -135,21 +141,22 @@ export function App() {
     if (intent.action === 'where_am_i' || intent.action === 'what_can_i_do' || intent.action === 'go_back') { setAssistantMessage(''); dispatch({ type: 'command', command: intent.action }); }
   }
 
-  async function submitRequest() {
+  async function submitRequest(text: string = request) {
+    if (text !== request) setRequest(text);
     controller.current?.abort();
     const current = new AbortController();
     controller.current = current;
     setPending(true); setRefusal('');
     const signal = AbortSignal.any([current.signal, AbortSignal.timeout(10000)]);
     try {
-      let intent = fallbackIntent(request, slots);
+      let intent = fallbackIntent(text, slots);
       if (!intent) {
-        const action = parseRequest(request);
+        const action = parseRequest(text);
         if (action.type !== 'unknown' && !slots) { act(action); return; }
         if (useAI) {
           announce('Interpreting your request. You can still use navigation.');
-          try { intent = await interpretRequest(request, signal, slots); }
-          catch { intent = fallbackIntent(request, slots); }
+          try { intent = await interpretRequest(text, signal, slots); }
+          catch { intent = fallbackIntent(text, slots); }
         }
       }
       if (current.signal.aborted || controller.current !== current) return;
@@ -162,15 +169,18 @@ export function App() {
     }
   }
 
-  const dashTitle = state.view === 'home' ? 'Welcome back' : views[state.view];
+  const demo = isDemo();
+  const name = profileName();
+  const exitDemo = () => { endDemo(); window.location.hash = '#login'; };
+  const dashTitle = state.view === 'home' ? (name ? `Welcome back, ${name}` : 'Welcome back') : views[state.view];
   const tabs: View[] = ['home', 'activity', 'transfer', 'contacts'];
   const pendingCount = summary.entries.filter(e => !['confirmed', 'failed'].includes(e.status)).length;
-  return <div className="rb-app">
+  return <div className={`rb-app${display.largeText ? ' rb-large' : ''}${display.contrast ? ' rb-contrast' : ''}`}>
     <a className="skip" href="#app" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to main content</a>
     <div className="rb-sidebar">
-      <header className="rb-brandbar"><a className="brand" href="#" aria-label="Readback home"><Brand /></a><p className="rb-network"><span className="status-dot" aria-hidden="true" />Devnet</p></header>
-      <nav className="rb-nav" aria-label="Main navigation">{navOrder.map(view => <button key={view} aria-current={state.view === view ? 'page' : undefined} onClick={() => navigate(view)}><Icon name={viewIcons[view]} size={20} />{views[view]}{view === 'activity' && pendingCount > 0 && <span className="rb-badge"><span className="sr-only">, </span>{pendingCount}<span className="sr-only"> pending</span></span>}</button>)}</nav>
-      {summary.wallet && <a className="rb-side-card" href={`https://faucet.solana.com/?address=${summary.wallet.address}`} target="_blank" rel="noreferrer"><span className="rb-side-arrow" aria-hidden="true"><Icon name="external" size={18} /></span><span>Get test SOL</span><span className="sr-only"> (opens faucet in a new tab)</span></a>}
+      <header className="rb-brandbar"><a className="brand" href="#" aria-label="Readback home"><Brand /></a><p className="rb-network">Devnet</p></header>
+      <nav className="rb-nav" aria-label="Main navigation">{navOrder.map(view => <button key={view} aria-current={state.view === view ? 'page' : undefined} onClick={() => navigate(view)}>{state.view === view && <motion.span layoutId="rb-nav-pill" className="rb-nav-pill" transition={{ duration: durations.ui + 0.05, ease }} aria-hidden="true" />}<Icon name={viewIcons[view]} size={20} />{views[view]}{view === 'activity' && pendingCount > 0 && <span className="rb-badge"><span className="sr-only">, </span>{pendingCount}<span className="sr-only"> pending</span></span>}</button>)}</nav>
+      {summary.wallet && !demo && <a className="rb-side-card" href={`https://faucet.solana.com/?address=${summary.wallet.address}`} target="_blank" rel="noreferrer"><span className="rb-side-arrow" aria-hidden="true"><Icon name="external" size={18} /></span><span>Get test SOL</span><span className="sr-only"> (opens faucet in a new tab)</span></a>}
     </div>
     <main id="main" tabIndex={-1} className={`rb-main view-${state.view}`}>
       <div className="rb-top">
@@ -183,16 +193,17 @@ export function App() {
           <button type="submit" aria-label={pending ? 'New request' : 'Submit request'}><Icon name="arrow" size={18} /></button>
         </form>
         <button className="rb-icon-btn rb-ask-toggle" aria-expanded={askOpen} aria-label="Ask Readback" onClick={() => { setAskOpen(o => !o); requestAnimationFrame(() => document.getElementById('request')?.focus()); }}><Icon name="chat" size={20} /></button>
-        <AccountMenu address={summary.wallet?.address ?? null} announce={announce} onSettings={() => navigate('settings')} />
+        <AccountMenu address={summary.wallet?.address ?? null} announce={announce} onSettings={() => navigate('settings')} demo={demo} onExitDemo={exitDemo} />
       </div>
+      {demo && <div className="rb-demo"><Icon name="spark" size={20} /><p><strong>Demo account.</strong> Fictional data. Nothing is sent to Solana.</p><button onClick={exitDemo}>Exit demo</button></div>}
       <div role="alert" aria-atomic="true" className="rb-alert">{refusal && <p className="error-message">{refusal}</p>}</div>
       {pending && <button className="rb-cancel" onClick={() => { controller.current?.abort(); controller.current = null; setPending(false); setAssistantMessage('Request canceled.'); }}>Cancel request</button>}
-      {state.view === 'home' && <Dashboard summary={summary} incoming={incoming} announce={announce} navigate={navigate} sendTo={sendTo} explainLast={() => { void explainLatest(new AbortController().signal); }} />}
+      {state.view === 'home' && <Dashboard summary={summary} incoming={incoming} announce={announce} navigate={navigate} sendTo={sendTo} explainLast={() => { void explainLatest(new AbortController().signal); }} onAsk={text => void submitRequest(text)} speech={speech} onSpeechChange={changeSpeech} display={display} onDisplayChange={setDisplay} />}
       {state.view === 'wallet' && <WalletPanel announce={announce} />}
       {state.view === 'contacts' && <ContactsPanel announce={announce} />}
       {state.view === 'transfer' && <TransferPanel key={draft?.requestId ?? 'manual'} draft={draft} announce={announce} />}
       {state.view === 'activity' && <ActivityPanel announce={announce} useAI={useAI} />}
-      {state.view === 'settings' && <SettingsPanel speech={speech} onSpeechChange={next => { setSpeech(next); saveSpeech(next); }} announce={announce} useAI={useAI} onUseAIChange={enabled => { setUseAI(enabled); if (!enabled) { controller.current?.abort(); controller.current = null; setPending(false); setAssistantMessage('Assistant off. Local navigation is available.'); } }} />}
+      {state.view === 'settings' && <SettingsPanel speech={speech} onSpeechChange={changeSpeech} display={display} onDisplayChange={setDisplay} announce={announce} useAI={useAI} onUseAIChange={enabled => { setUseAI(enabled); if (!enabled) { controller.current?.abort(); controller.current = null; setPending(false); setAssistantMessage('Assistant off. Local navigation is available.'); } }} />}
       {state.view === 'learn' && <section className="learning rb-card" aria-label="Learning topics">{topics.map(topic => <details key={topic.id} open={selectedTopic === topic.id} onToggle={event => { if (event.currentTarget.open) setSelectedTopic(topic.id); else setSelectedTopic(current => current === topic.id ? null : current); }}><summary>{topic.title}</summary><p>{topic.text}</p></details>)}</section>}
       <section className="rb-context" aria-label="Orientation">
         <div className="context-actions">{capabilities.map(capability => <button key={capability.id} onClick={() => { if (capability.id === 'repeat') { if (refusal) { setAssistantMessage(refusal); setRefusal(''); } setStatusRevision(n => n + 1); } else act({ type: 'command', command: capability.id }); }}>{capability.label}</button>)}</div>

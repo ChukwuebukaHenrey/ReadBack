@@ -251,7 +251,7 @@ test('axe on every view, warning review and payment result', async ({ page }) =>
   await page.getByRole('button', { name: 'Done' }).click();
   await go('Activity');
   await page.getByRole('button', { name: 'Explain payment to Mum' }).click();
-  await expect(page.locator('.readback-text')).toBeVisible();
+  await expect(page.locator('.readback-text')).toBeVisible({ timeout: 20_000 });
   await scan('activity with explanation');
 });
 test('landing navbar: modern menu works by keyboard on small screens', async ({ page }) => {

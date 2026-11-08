@@ -5,6 +5,7 @@ import { transfers, checkPayment } from './service';
 import { spellAddress } from '../../lib/spell';
 import type { Proposal, PaymentResult } from './coordinator';
 import { useWalletSummary } from '../dashboard/useWalletSummary';
+import { isDemoSignature } from '../demo/demo';
 import { Avatar } from '../dashboard/Avatar';
 import { DAILY_LIMIT, MAX_TRANSFER } from './policy';
 
@@ -102,12 +103,12 @@ export function TransferPanel({ draft, announce }: { draft?: TransferDraft; anno
     </form>
     <dialog ref={dialog} className="payment-dialog" aria-labelledby="payment-review-heading" aria-describedby={result ? 'payment-result' : 'payment-readback'} onCancel={e => { e.preventDefault(); if (inFlight.current) { setDialogMessage('Sending is in progress and cannot be canceled now. Wait for the result.'); setRevision(n => n + 1); return; } close(); }}>
       {proposal && <>
-        <h2 id="payment-review-heading" ref={heading} tabIndex={-1}>{result ? result.status === 'confirmed' ? 'Payment confirmed' : result.status === 'failed' ? 'Payment failed' : 'Confirmation pending' : 'Review Devnet test payment'}</h2>
+        <h2 id="payment-review-heading" ref={heading} tabIndex={-1}>{result ? isDemoSignature(result.signature) ? 'Demo payment recorded' : result.status === 'confirmed' ? 'Payment confirmed' : result.status === 'failed' ? 'Payment failed' : 'Confirmation pending' : 'Review Devnet test payment'}</h2>
         {result ? <>
           <p id="payment-result">{result.status === 'confirmed' ? `${formatSol(proposal.amount)} SOL sent to ${proposal.contactName} on Devnet.` : result.message}</p>
           <p className="wallet-address">{result.signature}</p>
-          {result.status === 'confirmed' && <p>Consent receipt recorded on-chain: <span className="wallet-address">{proposal.consentReceipt}</span></p>}
-          <a href={`https://explorer.solana.com/tx/${result.signature}?cluster=devnet`} target="_blank" rel="noreferrer">View this payment on Solana Explorer (new tab)</a>
+          {result.status === 'confirmed' && !isDemoSignature(result.signature) && <p>Consent receipt recorded on-chain: <span className="wallet-address">{proposal.consentReceipt}</span></p>}
+          {!isDemoSignature(result.signature) && <a href={`https://explorer.solana.com/tx/${result.signature}?cluster=devnet`} target="_blank" rel="noreferrer">View this payment on Solana Explorer (new tab)</a>}
           <div className="wallet-actions">{result.status === 'pending' && <button disabled={busy} onClick={() => void check()}>Check confirmation</button>}<button disabled={busy} onClick={close}>Done</button></div>
         </> : <>
           <p id="payment-readback" className="readback-text">{proposal.readbackText}</p>
