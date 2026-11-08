@@ -1,16 +1,17 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mockDevnet } from './devnet-mock';
+import { goTo, pickContact } from './nav';
 
 const recipient = '4AKNMLm1eQKdxNFUW26yJSmM6UuyKSkGYt5fvQMbDsup';
 const mockNetwork = mockDevnet;
 async function setup(page: Page) {
   await page.goto('/#app');
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Wallet', exact: true }).click();
+  await goTo(page, 'Wallet');
   await page.getByLabel('I understand this is a disposable test wallet with no recovery.').check();
   await page.getByRole('button', { name: 'Create disposable Devnet wallet' }).click();
   await expect(page.getByText('2.5', { exact: false }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Saved contacts', exact: true }).click();
+  await goTo(page, 'Contacts');
   await page.getByLabel('Contact name', { exact: true }).fill('Mum');
   await page.getByLabel('Paste the recipient’s full Solana address').fill(recipient);
   await page.getByRole('button', { name: 'Review contact address' }).click();
@@ -18,8 +19,8 @@ async function setup(page: Page) {
   await page.getByLabel('I checked the full address').check();
   await page.getByRole('button', { name: 'Save verified contact' }).click();
   await expect(page.getByRole('button', { name: 'Review or rename Mum' })).toBeVisible();
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Send SOL', exact: true }).click();
-  await page.getByLabel('Saved contact', { exact: true }).selectOption({ label: 'Mum' });
+  await goTo(page, 'Send SOL');
+  await pickContact(page, 'Mum');
   await page.getByLabel('Amount in SOL', { exact: true }).fill('0.2');
 }
 async function openReview(page: Page) {
@@ -46,7 +47,7 @@ test('keyboard review, synthetic confirmation refusal, cancel and one-shot confi
   await expect(page.getByRole('heading', { name: 'Payment confirmed', exact: true })).toBeVisible();
   expect(network.sends()).toBe(1); expect(network.simulations()).toBe(3);
   await page.getByRole('button', { name: 'Done' }).click();
-  await page.getByRole('button', { name: 'Recent activity', exact: true }).click();
+  await goTo(page, 'Activity');
   await expect(page.getByRole('heading', { name: 'Confirmed — 0.2 SOL to Mum' })).toBeVisible();
   await expect(page.getByRole('link', { name: /View payment to Mum/ })).toHaveAttribute('href', /cluster=devnet/);
 });
@@ -96,9 +97,9 @@ test('axe and 320px reflow on dashboard, contacts, send and review', async ({ pa
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   };
   await scan(); await setup(page); await scan();
-  await page.getByRole('button', { name: 'Saved contacts', exact: true }).click(); await scan();
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Send SOL', exact: true }).click();
-  await page.getByLabel('Saved contact', { exact: true }).selectOption({ label: 'Mum' });
+  await goTo(page, 'Contacts'); await scan();
+  await goTo(page, 'Send SOL');
+  await pickContact(page, 'Mum');
   await page.getByLabel('Amount in SOL', { exact: true }).fill('0.2');
   await openReview(page); await scan();
 });
@@ -120,6 +121,7 @@ test('AI slot filling validates locally, and malformed extra fields are rejected
     const response = body.text === 'point two' ? { action: 'send', amountText: '0.2' } : { action: 'send', contactName: 'Mum' };
     await route.fulfill({ json: response });
   });
+  await goTo(page, 'Settings');
   await page.getByLabel('Use Groq for requests').check();
   await page.getByLabel('Type a request', { exact: true }).fill('abeg send Mum small money');
   await page.getByRole('button', { name: 'Submit request' }).click();
@@ -169,8 +171,8 @@ test('preflight rejection on first send is reported as failed with nothing sent'
 });
 test('header shows wallet, settings default speech off, reset requires explicit confirmation', async ({ page }) => {
   await mockNetwork(page); await setup(page);
-  await expect(page.getByRole('banner').getByText(/Wallet address ending/)).toBeVisible();
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Wallet address ending/ })).toBeVisible();
+  await goTo(page, 'Settings');
   await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeFocused();
   await expect(page.getByLabel('Read status updates aloud with app speech')).not.toBeChecked();
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
@@ -179,17 +181,17 @@ test('header shows wallet, settings default speech off, reset requires explicit 
   await expect(page.getByRole('button', { name: 'Delete wallet' })).toBeDisabled();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Reset demo wallet' })).toBeFocused();
-  await expect(page.getByRole('banner').getByText(/Wallet address ending/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Wallet address ending/ })).toBeVisible();
   await page.getByRole('button', { name: 'Reset demo wallet' }).click();
   await page.getByLabel('I understand I will lose access').check();
   await page.getByRole('button', { name: 'Delete wallet' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Demo wallet deleted' })).toBeVisible();
-  await expect(page.getByRole('banner').getByText(/Wallet address ending/)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Wallet address ending/ })).toHaveCount(0);
 });
 test('lookalike address of a saved contact needs a second explicit confirmation', async ({ page }) => {
   await mockNetwork(page); await setup(page);
   const poisoned = recipient.slice(0, 4) + '2'.repeat(recipient.length - 8) + recipient.slice(-4);
-  await page.getByRole('button', { name: 'Saved contacts', exact: true }).click();
+  await goTo(page, 'Contacts');
   await page.getByLabel('Contact name', { exact: true }).fill('Mum two');
   await page.getByLabel('Paste the recipient’s full Solana address').fill(poisoned);
   await page.getByRole('button', { name: 'Review contact address' }).click();
@@ -205,7 +207,7 @@ test('explains the last payment from facts, by button and by typed request', asy
   await page.getByRole('button', { name: 'Confirm test payment' }).click();
   await expect(page.getByRole('heading', { name: 'Payment confirmed', exact: true })).toBeVisible({ timeout: 20_000 });
   await page.getByRole('button', { name: 'Done' }).click();
-  await page.getByRole('button', { name: 'Recent activity', exact: true }).click();
+  await goTo(page, 'Activity');
   await page.getByRole('button', { name: 'Explain payment to Mum' }).click();
   await expect(page.locator('.readback-text')).toHaveText(/^You sent 0\.2 SOL to Mum on Devnet\. Solana Devnet confirmed it\./);
   await page.getByLabel('Type a request', { exact: true }).fill('explain last payment');
@@ -227,9 +229,9 @@ test('landing page: one h1, ordered headings, axe clean and 320px reflow', async
 test('axe on every view, warning review and payment result', async ({ page }) => {
   await mockNetwork(page); await setup(page);
   const scan = async (label: string) => { const v = (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations; expect(v.map(x => `${label}: ${x.id}`)).toEqual([]); };
-  const go = (name: string) => page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name, exact: true }).click();
-  for (const view of ['Home', 'Wallet', 'Explore Web3', 'Settings', 'Recent activity']) { await go(view); await scan(view); }
-  await go('Saved contacts');
+  const go = (name: Parameters<typeof goTo>[1]) => goTo(page, name);
+  for (const view of ['Dashboard', 'Wallet', 'Learn', 'Settings', 'Activity'] as const) { await go(view); await scan(view); }
+  await go('Contacts');
   const poisoned = recipient.slice(0, 4) + '2'.repeat(recipient.length - 8) + recipient.slice(-4);
   await page.getByLabel('Contact name', { exact: true }).fill('Mum two');
   await page.getByLabel('Paste the recipient’s full Solana address').fill(poisoned);
@@ -239,7 +241,7 @@ test('axe on every view, warning review and payment result', async ({ page }) =>
   await scan('contact review with warnings');
   await page.getByRole('button', { name: 'Cancel review' }).click();
   await go('Send SOL');
-  await page.getByLabel('Saved contact', { exact: true }).selectOption({ label: 'Mum' });
+  await pickContact(page, 'Mum');
   await page.getByLabel('Amount in SOL', { exact: true }).fill('0.2');
   await openReview(page);
   await page.getByRole('button', { name: 'Confirm test payment' }).click();
@@ -247,7 +249,7 @@ test('axe on every view, warning review and payment result', async ({ page }) =>
   await expect(page.getByRole('dialog')).toHaveAccessibleDescription('0.2 SOL sent to Mum on Devnet.');
   await scan('payment result');
   await page.getByRole('button', { name: 'Done' }).click();
-  await go('Recent activity');
+  await go('Activity');
   await page.getByRole('button', { name: 'Explain payment to Mum' }).click();
   await expect(page.locator('.readback-text')).toBeVisible();
   await scan('activity with explanation');

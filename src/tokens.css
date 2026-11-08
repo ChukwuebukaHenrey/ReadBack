@@ -5,24 +5,52 @@
   font-weight: 100 900;
   font-display: swap;
 }
+/* Readback tokens. Desktop: light workspace with a dark sidebar. Phone: dark workspace with a bright balance card.
+   Accent rule: --accent for large text and graphics only; --accent-strong carries white text (≥4.5:1). */
 :root {
   font-family: 'Onest', 'Segoe UI', system-ui, sans-serif;
   font-synthesis: none;
   font-weight: 400;
-  line-height: 1.6;
-  color-scheme: dark;
+  line-height: 1.5;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
-  --bg: #0d0f12;
-  --surface: #191c21;
-  --surface-alt: #242830;
-  --text: #faf9f6;
-  --muted: #c6cad1;
-  --accent: #ff713d;
-  --accent-hover: #ff895b;
-  --accent-text: #17120f;
-  --focus: #ffd166;
-  --border: #4a515c;
-  --success: #7ae2ad;
-  --danger: #ff9b92;
+  --bg: #f4efeb;
+  --surface: #ffffff;
+  --surface-alt: #faf6f2;
+  --text: #1c1411;
+  --muted: #6b5e57;
+  --accent: #ec5a17;
+  --accent-strong: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-soft: #ffe9dc;
+  --accent-text: #ffffff;
+  --focus: #1d4ed8;
+  --border: #ece2db;
+  --success: #15803d; --success-soft: #dcfce7;
+  --danger: #b42318; --danger-soft: #fee4e2;
+  --warning: #92400e; --warning-soft: #fef0c7;
+  --sidebar: #1c1411; --sidebar-text: #f6ece6; --sidebar-muted: #bfaea4;
+  --hero-from: #ffb27a; --hero-to: #ff7a3d; --hero-text: #1c1411;
+  --radius: 20px;
+}
+@media (max-width: 767px) {
+  :root {
+    color-scheme: dark;
+    --bg: #120b08;
+    --surface: #21150f;
+    --surface-alt: #2b1c15;
+    --text: #fbf3ee;
+    --muted: #cdbbb0;
+    --accent: #ff7a3d;
+    --accent-strong: #ff8a50;
+    --accent-hover: #ffa577;
+    --accent-soft: #3a1f12;
+    --accent-text: #1c1411;
+    --focus: #ffd166;
+    --border: #3a2920;
+    --success: #4ade80; --success-soft: #12301d;
+    --danger: #ff9b92; --danger-soft: #3a1512;
+    --warning: #fcd34d; --warning-soft: #372a0c;
+  }
 }

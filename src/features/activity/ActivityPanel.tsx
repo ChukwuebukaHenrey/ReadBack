@@ -35,11 +35,10 @@ export function ActivityPanel({ announce, compact = false, useAI = false }: { an
     finally { setBusy(false); }
   }
   const visible = compact ? entries.slice(0, 3) : entries;
-  return <section className="panel" aria-label="Payment activity">
+  return <section className="rb-card rb-activity" aria-label="Payment activity">
     {compact && <h2>Recent activity</h2>}
-    <p>Payments made through this browser. Status is confirmed only after a network check. Incoming history is not included in this demo.</p>
     {!loaded && !error && <p>Loading payment records…</p>}
-    {loaded && !entries.length && <p>No payments yet. Try “Send 0.1 SOL to Mum” after saving a verified contact.</p>}
+    {loaded && !entries.length && <p className="rb-empty">No payments yet.</p>}
     {!compact && <button disabled={busy} onClick={() => void refresh()}>{busy ? 'Checking…' : 'Refresh payment status'}</button>}
     <ul className="activity-list">{visible.map(entry => <li key={entry.id}>
       <h3>{entry.status === 'confirmed' ? 'Confirmed' : entry.status === 'failed' ? 'Failed' : 'Outcome unresolved'} — {formatSol(BigInt(entry.amount))} SOL to {entry.name}</h3>

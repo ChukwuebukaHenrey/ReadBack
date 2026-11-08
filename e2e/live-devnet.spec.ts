@@ -1,4 +1,5 @@
 import { test, expect, chromium } from '@playwright/test';
+import { goTo, pickContact } from './nav';
 import { address, createSolanaRpc, generateKeyPairSigner, lamports } from '@solana/kit';
 
 // Opt-in live run against real Solana Devnet. No RPC mocks: the app talks to its own relay.
@@ -16,7 +17,7 @@ test('real Devnet transfer through the keyboard review flow', async ({ baseURL }
   const contactName = `Mum ${Date.now() % 100000}`; // unique per run: the profile persists
 
   await page.goto('/#app');
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Wallet', exact: true }).click();
+  await goTo(page, 'Wallet');
   const create = page.getByRole('button', { name: 'Create disposable Devnet wallet' });
   const addressText = page.locator('.wallet-panel .wallet-address');
   await expect(create.or(addressText)).toBeVisible();
@@ -35,7 +36,7 @@ test('real Devnet transfer through the keyboard review flow', async ({ baseURL }
     expect(await funded()).toBe(true);
   }
 
-  await page.getByRole('button', { name: 'Saved contacts', exact: true }).click();
+  await goTo(page, 'Contacts');
   await page.getByLabel('Contact name', { exact: true }).fill(contactName);
   await page.getByLabel('Paste the recipient’s full Solana address').fill(recipient);
   await page.getByRole('button', { name: 'Review contact address' }).click();
@@ -43,8 +44,8 @@ test('real Devnet transfer through the keyboard review flow', async ({ baseURL }
   await page.getByLabel('I checked the full address').check();
   await page.getByRole('button', { name: 'Save verified contact' }).click();
 
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Send SOL', exact: true }).click();
-  await page.getByLabel('Saved contact', { exact: true }).selectOption({ label: contactName });
+  await goTo(page, 'Send SOL');
+  await pickContact(page, contactName);
   await page.getByLabel('Amount in SOL', { exact: true }).fill('0.1');
   await page.getByRole('button', { name: 'Review payment', exact: true }).focus();
   await page.keyboard.press('Enter');

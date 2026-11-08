@@ -1,4 +1,4 @@
-export type IconName = 'home' | 'wallet' | 'send' | 'activity' | 'learn' | 'contacts' | 'arrow' | 'keyboard' | 'shield' | 'settings' | 'check' | 'speaker' | 'chat' | 'target' | 'bolt' | 'spark' | 'menu' | 'close' | 'book' | 'person' | 'external' | 'chevron';
+export type IconName = 'home' | 'wallet' | 'send' | 'activity' | 'learn' | 'contacts' | 'arrow' | 'keyboard' | 'shield' | 'settings' | 'check' | 'speaker' | 'chat' | 'target' | 'bolt' | 'spark' | 'menu' | 'close' | 'book' | 'person' | 'external' | 'chevron' | 'refresh' | 'plus' | 'copy' | 'receive' | 'logout';
 const paths: Record<IconName, string> = {
   home: 'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',
   wallet: 'M20 8V5H5a2 2 0 0 0 0 4h16v12H5a2 2 0 0 1-2-2V7m18 6h-6v4h6m-3-2h.01',
@@ -19,6 +19,11 @@ const paths: Record<IconName, string> = {
   close: 'M6 6l12 12M18 6 6 18',
   book: 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5m0 16a2 2 0 0 1 2-2h13',
   person: 'M12 4.5a2 2 0 1 0 0 .01M5 8.5l7 1.5 7-1.5M12 10v4.5m0 0-3.5 6m3.5-6 3.5 6',
+  refresh: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
+  plus: 'M12 5v14M5 12h14',
+  copy: 'M9 9h11v11H9V9m-4 6H4V4h11v1',
+  receive: 'M17 7 7 17m0-9v9h9',
+  logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
   chevron: 'm6 9 6 6 6-6',
   external: 'M14 4h6v6m0-6-9 9M18 14v6H4V6h6',
   shield: 'm12 3 8 4v5c0 5-8 9-8 9s-8-4-8-9V7l8-4m-4 9 3 3 5-6',

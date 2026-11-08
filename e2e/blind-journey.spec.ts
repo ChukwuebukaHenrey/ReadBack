@@ -52,14 +52,14 @@ test('blind user journey: keyboard and screen-reader cues only', async ({ page }
 
   // Wallet.
   await activate(page, nav(page, 'Wallet'));
-  await expect(page.getByRole('heading', { level: 1, name: 'Your Devnet wallet' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Wallet' })).toBeFocused();
   await activate(page, page.getByLabel('I understand this is a disposable test wallet with no recovery.'), 'Space');
   await activate(page, page.getByRole('button', { name: 'Create disposable Devnet wallet' }));
   await expect.poll(() => announcements(page)).toContainEqual(expect.stringContaining('Balance updated: 2.5 SOL'));
 
   // Contact, verified by retyping the last four characters.
-  await activate(page, nav(page, 'Saved contacts'));
-  await expect(page.getByRole('heading', { level: 1, name: 'Saved contacts' })).toBeFocused();
+  await activate(page, nav(page, 'Contacts'));
+  await expect(page.getByRole('heading', { level: 1, name: 'Contacts' })).toBeFocused();
   await tabTo(page, page.getByLabel('Contact name', { exact: true })); await page.keyboard.type('Mum');
   await tabTo(page, page.getByLabel('Paste the recipient’s full Solana address')); await page.keyboard.type(recipient);
   await page.keyboard.press('Enter');

@@ -3,7 +3,7 @@ import { loadWallet, resetWallet } from '../wallet/service';
 import { readLedger } from '../transfers/ledger';
 import { speak, speechSupported, stopSpeech, type SpeechSettings } from '../../lib/speech';
 
-export function SettingsPanel({ speech, onSpeechChange, announce }: { speech: SpeechSettings; onSpeechChange: (next: SpeechSettings) => void; announce: (text: string) => void }) {
+export function SettingsPanel({ speech, onSpeechChange, announce, useAI, onUseAIChange }: { speech: SpeechSettings; onSpeechChange: (next: SpeechSettings) => void; announce: (text: string) => void; useAI: boolean; onUseAIChange: (enabled: boolean) => void }) {
   const [hasWallet, setHasWallet] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [understood, setUnderstood] = useState(false);
@@ -43,8 +43,12 @@ export function SettingsPanel({ speech, onSpeechChange, announce }: { speech: Sp
 
   return <section className="settings" aria-label="Settings">
     <div className="panel">
+      <h2>Assistant</h2>
+      <label className="checkbox-label"><input type="checkbox" checked={useAI} onChange={e => onUseAIChange(e.target.checked)} />Use Groq for requests that local commands don’t recognize</label>
+      <p className="field-help">Sends your typed request to Groq. Never your contacts. AI cannot approve payments.</p>
+    </div>
+    <div className="panel">
       <h2>Speech</h2>
-      <p>Readback works with your screen reader. App speech is off by default so it does not talk over NVDA, VoiceOver or TalkBack.</p>
       {!supported && <p>This browser does not support app speech. Your screen reader still reads every update.</p>}
       <label className="checkbox-label"><input type="checkbox" disabled={!supported} checked={speech.enabled} onChange={e => { const next = { ...speech, enabled: e.target.checked }; onSpeechChange(next); if (!next.enabled) stopSpeech(); announce(next.enabled ? 'App speech on.' : 'App speech off.'); }} />Read status updates aloud with app speech</label>
       <label htmlFor="speech-rate">Speech rate</label>
@@ -52,7 +56,6 @@ export function SettingsPanel({ speech, onSpeechChange, announce }: { speech: Sp
         <option value="0.75">Slower</option><option value="1">Normal</option><option value="1.25">Faster</option><option value="1.5">Fastest</option>
       </select>
       <div className="wallet-actions"><button disabled={!supported || !speech.enabled} onClick={() => speak('This is Readback app speech.', speech)}>Test speech</button></div>
-      <p className="field-help">Voice input is not available in this demo. Typing always works.</p>
     </div>
     <div className="panel">
       <h2>Keyboard</h2>
@@ -65,7 +68,7 @@ export function SettingsPanel({ speech, onSpeechChange, announce }: { speech: Sp
     </div>
     <div className="panel">
       <h2>Demo wallet</h2>
-      <p className="wallet-warning">Solana Devnet only. This wallet has no backup or recovery. Resetting deletes its key from this browser permanently, and any test SOL in it becomes unreachable.</p>
+      <p className="wallet-warning">No backup. Resetting deletes this wallet permanently.</p>
       <button ref={opener} disabled={!hasWallet} onClick={() => { setError(''); setConfirming(true); }}>Reset demo wallet</button>
       {!hasWallet && <p className="field-help">No demo wallet exists in this browser.</p>}
     </div>

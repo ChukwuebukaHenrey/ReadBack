@@ -1,7 +1,7 @@
 import { availableActionsText } from './capabilityRegistry';
 export const views = {
-    home: 'Home', wallet: 'Your Devnet wallet', contacts: 'Saved contacts',
-    transfer: 'Send SOL', activity: 'Recent activity', learn: 'Explore Web3', settings: 'Settings',
+    home: 'Dashboard', wallet: 'Wallet', contacts: 'Contacts',
+    transfer: 'Send SOL', activity: 'Activity', learn: 'Learn', settings: 'Settings',
 } as const;
 export type View = keyof typeof views;
 export const capabilities = [
@@ -17,7 +17,7 @@ export type State = {
     announcement: string;
     revision: number;
 };
-export const initialState: State = { view: 'home', history: [], announcement: 'You are on Home. No pending action.', revision: 0 };
+export const initialState: State = { view: 'home', history: [], announcement: 'You are on Dashboard. No pending action.', revision: 0 };
 export type Action = {
     type: 'navigate';
     view: View;
@@ -45,7 +45,7 @@ export function reducer(state: State, action: Action): State {
         case 'repeat': return next;
         case 'go_back': {
             const view = state.history.at(-1);
-            return view ? { ...next, view, history: state.history.slice(0, -1), announcement: location(view) } : { ...next, announcement: 'You are on Home. There is no previous page. No pending action.' };
+            return view ? { ...next, view, history: state.history.slice(0, -1), announcement: location(view) } : { ...next, announcement: 'You are on Dashboard. There is no previous page. No pending action.' };
         }
     }
 }
@@ -54,6 +54,6 @@ export function parseRequest(input: string): Action {
     const commands: Record<string, Command> = { 'where am i': 'where_am_i', 'what can i do': 'what_can_i_do', 'go back': 'go_back', back: 'go_back', repeat: 'repeat' };
     if (Object.hasOwn(commands, text))
         return { type: 'command', command: commands[text] };
-    const pages: Record<string, View> = { home: 'home', wallet: 'wallet', 'check balance': 'wallet', contacts: 'contacts', 'saved contacts': 'contacts', 'send sol': 'transfer', 'recent activity': 'activity', activity: 'activity', 'explore web3': 'learn', settings: 'settings' };
+    const pages: Record<string, View> = { home: 'home', dashboard: 'home', learn: 'learn', send: 'transfer', wallet: 'wallet', 'check balance': 'wallet', contacts: 'contacts', 'saved contacts': 'contacts', 'send sol': 'transfer', 'recent activity': 'activity', activity: 'activity', 'explore web3': 'learn', settings: 'settings' };
     return Object.hasOwn(pages, text) ? { type: 'navigate', view: pages[text] } : { type: 'unknown' };
 }

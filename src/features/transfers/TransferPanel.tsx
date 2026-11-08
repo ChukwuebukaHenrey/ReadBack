@@ -4,10 +4,14 @@ import { formatSol } from '../wallet/amount';
 import { transfers, checkPayment } from './service';
 import { spellAddress } from '../../lib/spell';
 import type { Proposal, PaymentResult } from './coordinator';
+import { useWalletSummary } from '../dashboard/useWalletSummary';
+import { Avatar } from '../dashboard/Avatar';
+import { DAILY_LIMIT, MAX_TRANSFER } from './policy';
 
 export type TransferDraft = { contactId: string; amountText: string; requestId: number };
 export function TransferPanel({ draft, announce }: { draft?: TransferDraft; announce: (text: string) => void }) {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const summary = useWalletSummary();
   const [loaded, setLoaded] = useState(false);
   const [contactId, setContactId] = useState(draft?.contactId ?? '');
   const [amount, setAmount] = useState(draft?.amountText ?? '');
@@ -75,19 +79,25 @@ export function TransferPanel({ draft, announce }: { draft?: TransferDraft; anno
     catch { setError('Could not reach the network. Keep the signature and check again; do not send a new payment.'); }
     finally { inFlight.current = false; setBusy(false); }
   }
+  const used = summary.remainingToday === null ? null : DAILY_LIMIT - summary.remainingToday;
   return <section aria-label="Prepare a payment">
-    <p className="intro">Send test SOL to a contact you have independently verified. Limit: 0.5 SOL per payment and 2 SOL per UTC day.</p>
-    <form className="panel transfer-form" onSubmit={e => { e.preventDefault(); void review(); }}>
-      {draft && <p>The request filled these fields. Check or edit them, then review your payment.</p>}
-      <label htmlFor="payment-contact">Saved contact</label>
-      <select id="payment-contact" value={contactId} onChange={e => setContactId(e.target.value)} disabled={busy} required aria-describedby="contact-help">
-        <option value="">Choose a verified contact</option>{contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </select>
-      <p id="contact-help" className="field-help">{loaded && !contacts.length ? 'Add and verify a contact in Saved contacts first.' : 'Recipients come only from your saved contacts.'}</p>
-      <label htmlFor="payment-amount">Amount in SOL</label>
-      <input id="payment-amount" inputMode="decimal" type="text" value={amount} onChange={e => setAmount(e.target.value)} disabled={busy} required maxLength={30} aria-describedby="amount-help" />
-      <p id="amount-help" className="field-help">Up to 0.5 SOL. Use an exact amount with at most nine decimal places.</p>
-      <button type="submit" className="primary" disabled={!loaded || !contacts.length} aria-disabled={busy || undefined}>{busy && !proposal ? 'Preparing…' : 'Review payment'}</button>
+    <form className="rb-send" onSubmit={e => { e.preventDefault(); void review(); }}>
+      <div className="rb-from">
+        <p className="rb-from-label">Transfer from</p>
+        <div className="rb-from-row">{summary.wallet && <Avatar seed={summary.wallet.address} name="W" size={44} />}<span className="rb-row-text"><strong>My wallet</strong><small>{summary.wallet ? `••••${summary.wallet.address.slice(-4)}` : 'No wallet'}</small></span><span className="rb-from-balance">{summary.balance ? `${formatSol(summary.balance.lamports)} SOL` : summary.balanceError ? 'Unavailable' : '…'}</span></div>
+      </div>
+      {draft && <p className="rb-note">Filled from your request. Nothing is approved.</p>}
+      <label htmlFor="payment-amount" className="rb-amount-label">Amount in SOL</label>
+      <div className="rb-amount-field"><input id="payment-amount" inputMode="decimal" type="text" value={amount} onChange={e => setAmount(e.target.value)} disabled={busy} required maxLength={30} placeholder="0.0" aria-describedby="amount-help" /><span aria-hidden="true">SOL</span></div>
+      <div className="rb-limit" id="amount-help">
+        <p><span>Transfer limit</span><span>{formatSol(MAX_TRANSFER)} SOL</span></p>
+        {used !== null && <div className="rb-meter" role="img" aria-label={`${formatSol(used)} of ${formatSol(DAILY_LIMIT)} SOL used today`}><span style={{ width: `${Number(used * 100n / DAILY_LIMIT)}%` }} /></div>}
+      </div>
+      <fieldset className="rb-quick-send" disabled={busy}>
+        <legend>Quick send</legend>
+        {loaded && !contacts.length ? <p className="rb-empty">Add a contact first.</p> : <div className="rb-chips">{contacts.map(c => <label key={c.id} className="rb-chip-radio"><input type="radio" name="payment-contact" value={c.id} checked={contactId === c.id} onChange={() => setContactId(c.id)} required /><Avatar seed={c.address} name={c.name} size={36} /><span className="rb-row-text"><strong>{c.name}</strong><small>••••{c.address.slice(-4)}</small></span></label>)}</div>}
+      </fieldset>
+      <button type="submit" className="primary rb-send-btn" disabled={!loaded || !contacts.length} aria-disabled={busy || undefined}>{busy && !proposal ? 'Preparing…' : 'Review payment'}</button>
       {!proposal && error && <p role="alert" className="error-message">{error}</p>}
     </form>
     <dialog ref={dialog} className="payment-dialog" aria-labelledby="payment-review-heading" aria-describedby={result ? 'payment-result' : 'payment-readback'} onCancel={e => { e.preventDefault(); if (inFlight.current) { setDialogMessage('Sending is in progress and cannot be canceled now. Wait for the result.'); setRevision(n => n + 1); return; } close(); }}>
