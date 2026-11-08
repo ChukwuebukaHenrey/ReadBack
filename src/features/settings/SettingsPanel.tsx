@@ -47,6 +47,7 @@ export function SettingsPanel({ speech, onSpeechChange, display, onDisplayChange
       <h2>Assistant</h2>
       <label className="checkbox-label"><input type="checkbox" checked={useAI} onChange={e => onUseAIChange(e.target.checked)} />Use Groq for requests that local commands don’t recognize</label>
       <p className="field-help">Sends your typed request to Groq. Never your contacts. AI cannot approve payments.</p>
+      <p className="field-help">Voice input: press Speak and say your request. It uses your browser’s speech service (in Chrome, audio goes to Google for recognition). The microphone is off during payment reviews, and saying “confirm” never approves a payment.</p>
     </div>
     <div className="panel">
       <h2>Display</h2>

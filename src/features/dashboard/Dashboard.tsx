@@ -27,10 +27,11 @@ type Props = {
   announce: (text: string) => void; navigate: (view: View) => void;
   sendTo: (contactId: string) => void; explainLast: () => void; onAsk: (text: string) => void;
   speech: SpeechSettings; onSpeechChange: (next: SpeechSettings) => void;
+  voice: { supported: boolean; listening: boolean; toggle: () => void };
   display: DisplayPrefs; onDisplayChange: (next: DisplayPrefs) => void;
 };
 
-export function Dashboard({ summary, incoming, announce, navigate, sendTo, explainLast, onAsk, speech, onSpeechChange, display, onDisplayChange }: Props) {
+export function Dashboard({ summary, incoming, announce, navigate, sendTo, explainLast, onAsk, voice, speech, onSpeechChange, display, onDisplayChange }: Props) {
   const { wallet, balance, balanceError, entries, contacts, remainingToday, loaded } = summary;
   const [now] = useState(() => Date.now());
   const [hidden, setHidden] = useState(false);
@@ -74,6 +75,7 @@ export function Dashboard({ summary, incoming, announce, navigate, sendTo, expla
       <form onSubmit={e => { e.preventDefault(); if (ask.trim()) { onAsk(ask.trim()); setAsk(''); } }}>
         <label htmlFor="dash-ask" className="sr-only">Ask Readback</label>
         <input id="dash-ask" value={ask} onChange={e => setAsk(e.target.value)} maxLength={300} placeholder="Send 0.1 SOL to Mum" autoComplete="off" />
+        {voice.supported && <button type="button" className={`rb-mic${voice.listening ? ' on' : ''}`} aria-pressed={voice.listening} onClick={voice.toggle}><Icon name="mic" size={20} /><span>{voice.listening ? 'Listening' : 'Speak'}</span></button>}
         <button type="submit" className="primary">Ask</button>
       </form>
       <ul className="rb-prompts" aria-label="Example requests">{["What's my balance?", 'Explain last payment', 'What can I do?'].map(p => <li key={p}><button onClick={() => onAsk(p)}>{p}</button></li>)}</ul>

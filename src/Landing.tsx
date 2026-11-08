@@ -68,7 +68,7 @@ export function Landing() {
         </section>
         <div className="lp-band">
           <p>Built for the way you interact.</p>
-          <ul>{([['keyboard', 'Keyboard'], ['chat', 'Typed requests'], ['target', 'Screen readers'], ['check', 'Your approval']] as [IconName, string][]).map(([icon, label]) => <li key={label}><Icon name={icon} size={22} />{label}</li>)}</ul>
+          <ul>{([['mic', 'Voice'], ['keyboard', 'Keyboard'], ['chat', 'Typed requests'], ['target', 'Screen readers'], ['check', 'Your approval']] as [IconName, string][]).map(([icon, label]) => <li key={label}><Icon name={icon} size={22} />{label}</li>)}</ul>
         </div>
 
         <section id="features" className="lp-section" aria-labelledby="features-heading">

@@ -1,6 +1,6 @@
 import {
   ArrowClockwiseIcon, ArrowDownLeftIcon, ArrowRightIcon, ArrowUpRightIcon, BookOpenTextIcon, CaretDownIcon,
-  ChatCircleDotsIcon, CheckIcon, CoinsIcon, CopyIcon, EarIcon, EnvelopeSimpleIcon, EyeIcon, EyeSlashIcon,
+  ChatCircleDotsIcon, CheckIcon, MicrophoneIcon, CoinsIcon, CopyIcon, EarIcon, EnvelopeSimpleIcon, EyeIcon, EyeSlashIcon,
   GraduationCapIcon, HouseIcon, InfoIcon, KeyboardIcon, LightningIcon, ListIcon, LockKeyIcon, PaperPlaneTiltIcon,
   PersonArmsSpreadIcon, PlusIcon, PulseIcon, ShieldCheckIcon, SignOutIcon, SlidersHorizontalIcon, SparkleIcon,
   SpeakerHighIcon, UserCircleIcon, UsersThreeIcon, WalletIcon, XIcon, type Icon as PhosphorIcon, type IconWeight,
@@ -14,7 +14,7 @@ const icons = {
   target: EarIcon, bolt: LightningIcon, spark: SparkleIcon, menu: ListIcon, close: XIcon, book: BookOpenTextIcon,
   person: PersonArmsSpreadIcon, external: ArrowUpRightIcon, chevron: CaretDownIcon, refresh: ArrowClockwiseIcon,
   plus: PlusIcon, copy: CopyIcon, receive: ArrowDownLeftIcon, logout: SignOutIcon, coins: CoinsIcon,
-  eye: EyeIcon, eyeOff: EyeSlashIcon, lock: LockKeyIcon, mail: EnvelopeSimpleIcon, user: UserCircleIcon, info: InfoIcon,
+  eye: EyeIcon, eyeOff: EyeSlashIcon, lock: LockKeyIcon, mail: EnvelopeSimpleIcon, user: UserCircleIcon, info: InfoIcon, mic: MicrophoneIcon,
 } satisfies Record<string, PhosphorIcon>;
 export type IconName = keyof typeof icons;
 

@@ -15,6 +15,7 @@ import { useWalletSummary } from './features/dashboard/useWalletSummary';
 import { AccountMenu } from './features/wallet/AccountMenu';
 import { endDemo, isDemo, profileName } from './features/demo/demo';
 import { useDisplayPrefs } from './lib/display';
+import { useVoiceInput } from './lib/voice';
 import { ContactsPanel } from './features/contacts/ContactsPanel';
 import { listContacts } from './features/contacts/service';
 import { nameKey } from './features/contacts/names';
@@ -77,6 +78,7 @@ export function App() {
 
   const announce = useCallback((text: string) => { setAssistantMessage(text); setStatusRevision(n => n + 1); }, []);
   const incoming = useIncomingPayments(announce);
+  const voice = useVoiceInput({ onFinal: text => { setAskOpen(true); void submitRequest(text); }, announce });
   const summary = useWalletSummary(`${incoming}|${state.view}`);
   const [askOpen, setAskOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -192,13 +194,15 @@ export function App() {
           <input id="request" value={request} onChange={event => setRequest(event.target.value)} required maxLength={300} autoComplete="off" placeholder="Ask Readback" />
           <button type="submit" aria-label={pending ? 'New request' : 'Submit request'}><Icon name="arrow" size={18} /></button>
         </form>
+        {voice.supported && <button type="button" className={`rb-mic${voice.listening ? ' on' : ''}`} aria-pressed={voice.listening} onClick={voice.toggle}><Icon name="mic" size={20} /><span>{voice.listening ? 'Listening' : 'Speak'}</span></button>}
         <button className="rb-icon-btn rb-ask-toggle" aria-expanded={askOpen} aria-label="Ask Readback" onClick={() => { setAskOpen(o => !o); requestAnimationFrame(() => document.getElementById('request')?.focus()); }}><Icon name="chat" size={20} /></button>
         <AccountMenu address={summary.wallet?.address ?? null} announce={announce} onSettings={() => navigate('settings')} demo={demo} onExitDemo={exitDemo} />
       </div>
       {demo && <div className="rb-demo"><Icon name="spark" size={20} /><p><strong>Demo account.</strong> Fictional data. Nothing is sent to Solana.</p><button onClick={exitDemo}>Exit demo</button></div>}
+      {voice.listening && <p className="rb-heard" aria-hidden="true"><span className="rb-pulse" />{voice.interim || 'Listening…'}</p>}
       <div role="alert" aria-atomic="true" className="rb-alert">{refusal && <p className="error-message">{refusal}</p>}</div>
       {pending && <button className="rb-cancel" onClick={() => { controller.current?.abort(); controller.current = null; setPending(false); setAssistantMessage('Request canceled.'); }}>Cancel request</button>}
-      {state.view === 'home' && <Dashboard summary={summary} incoming={incoming} announce={announce} navigate={navigate} sendTo={sendTo} explainLast={() => { void explainLatest(new AbortController().signal); }} onAsk={text => void submitRequest(text)} speech={speech} onSpeechChange={changeSpeech} display={display} onDisplayChange={setDisplay} />}
+      {state.view === 'home' && <Dashboard summary={summary} incoming={incoming} announce={announce} navigate={navigate} sendTo={sendTo} explainLast={() => { void explainLatest(new AbortController().signal); }} onAsk={text => void submitRequest(text)} voice={voice} speech={speech} onSpeechChange={changeSpeech} display={display} onDisplayChange={setDisplay} />}
       {state.view === 'wallet' && <WalletPanel announce={announce} />}
       {state.view === 'contacts' && <ContactsPanel announce={announce} />}
       {state.view === 'transfer' && <TransferPanel key={draft?.requestId ?? 'manual'} draft={draft} announce={announce} />}

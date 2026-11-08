@@ -364,3 +364,13 @@ input::placeholder { color: var(--muted); }
   :is(.rb-actions button, .rb-prompts button, .rb-quick button, .context-actions button, .primary) { transition: transform 160ms cubic-bezier(.22,1,.36,1), background-color 160ms ease, border-color 160ms ease; }
   :is(.rb-actions button, .rb-prompts button, .rb-quick button, .context-actions button, .primary):active { transform: scale(.97); }
 }
+
+/* Voice: push-to-talk */
+.rb-mic { min-height: 46px; border-radius: 999px; padding: 0 16px; gap: 8px; font-weight: 600; background: var(--surface); flex-shrink: 0; }
+.rb-mic svg { color: var(--accent-strong); }
+.rb-mic.on { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-text); }
+.rb-mic.on svg { color: var(--accent-text); }
+.rb-heard { display: flex; align-items: center; gap: 10px; margin: -8px 0 16px; padding: 10px 14px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-hover); font-weight: 600; }
+.rb-pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-strong); flex-shrink: 0; }
+@media (prefers-reduced-motion: no-preference) { .rb-pulse { animation: rb-pulse 1.2s ease-in-out infinite; } @keyframes rb-pulse { 50% { opacity: .35; } } }
+@media (max-width: 767px) { .rb-top .rb-mic span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .rb-top .rb-mic { width: 44px; padding: 0; } }
