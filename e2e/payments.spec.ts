@@ -213,7 +213,7 @@ test('explains the last payment from facts, by button and by typed request', asy
   await expect(page.getByRole('status').filter({ hasText: 'You sent 0.2 SOL to Mum' })).toBeVisible();
 });
 test('landing page: one h1, ordered headings, axe clean and 320px reflow', async ({ page }) => {
-  for (const width of [320, 1280]) {
+  for (const width of [320, 390, 820, 1280, 1440]) {
     await page.setViewportSize({ width, height: 900 }); await page.goto('/');
     expect(await page.locator('h1').count()).toBe(1);
     const levels = await page.locator('main h1, main h2, main h3').evaluateAll(els => els.map(e => Number(e.tagName[1])));
@@ -251,4 +251,21 @@ test('axe on every view, warning review and payment result', async ({ page }) =>
   await page.getByRole('button', { name: 'Explain payment to Mum' }).click();
   await expect(page.locator('.readback-text')).toBeVisible();
   await scan('activity with explanation');
+});
+test('landing navbar: modern menu works by keyboard on small screens', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/');
+  const toggle = page.getByRole('button', { name: 'Menu' });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.focus(); await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Close' })).toHaveAttribute('aria-expanded', 'true');
+  const menu = page.getByRole('navigation', { name: 'Website menu' });
+  await expect(menu.getByRole('link', { name: 'Product' })).toBeFocused();
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Menu' })).toBeFocused();
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await menu.getByRole('link', { name: 'FAQ' }).click();
+  await expect(menu).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Frequently asked questions.' })).toBeInViewport();
 });

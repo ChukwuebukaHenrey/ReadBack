@@ -1,54 +1,178 @@
-import { Brand } from './components/Brand';
 import { Icon } from './components/Icon';
 import type { IconName } from './components/Icon';
+import { SiteNav } from './SiteNav';
 import './landing.css';
 
-const features: { title: string; label: string; copy: string; icon: IconName; art: string }[] = [
-  { title: 'Your way to navigate', label: 'Your controls', copy: 'Use your keyboard, screen reader or a typed request. Speaking is never required.', icon: 'keyboard', art: 'portrait' },
-  { title: 'Clarity at every step', label: 'Accessibility', copy: 'Clear labels, visible focus and written updates help you stay oriented.', icon: 'activity', art: 'waves' },
-  { title: 'Understand your wallet', label: 'Understand', copy: 'Check your live Devnet balance and learn what network fees mean.', icon: 'learn', art: 'mark' },
-  { title: 'You stay in control', label: 'Your choice', copy: 'Save independently verified contacts. AI can navigate, but cannot approve.', icon: 'shield', art: 'shield' },
-];
+const github = 'https://github.com/ChukwuebukaHenrey/ReadBack';
+const soups = 'https://arxiv.org/pdf/2306.06261';
 
-function WaveArt() {
-  return <svg viewBox="0 0 400 220" fill="none" aria-hidden="true">{Array.from({ length: 20 }, (_, i) => <path key={i} d={`M-20 ${160 + i * 4} C100 ${-80 + i * 8}, 240 ${300 - i * 3}, 430 ${30 + i * 6}`} stroke="currentColor" strokeWidth="1.3" />)}</svg>;
+function Pill({ icon, children }: { icon: IconName; children: string }) {
+  return <p className="lp-pill"><Icon name={icon} size={15} />{children}</p>;
 }
+function Check({ children }: { children: string }) {
+  return <li><span className="lp-check" aria-hidden="true"><Icon name="check" size={14} /></span>{children}</li>;
+}
+
+const details: { icon: IconName; title: string; copy: string }[] = [
+  { icon: 'keyboard', title: 'Typed requests', copy: 'Ask in your own words' },
+  { icon: 'target', title: 'Readable responses', copy: 'Simple, structured explanations' },
+  { icon: 'wallet', title: 'Wallet overview', copy: 'See what your wallet holds' },
+  { icon: 'speaker', title: 'Optional speech', copy: 'Hear updates read aloud' },
+  { icon: 'check', title: 'Review first', copy: 'Stay in control of each action' },
+];
+const ways: { n: string; label: string; icon: IconName; title: string; copy: string; points: string[]; cta: string; href: string; tone: string }[] = [
+  { n: '01', label: 'Typed requests', icon: 'chat', title: 'Ask naturally.', copy: 'Type what you want in your own words, such as “Send 0.1 SOL to Mum”.', points: ['Natural-language requests', 'Clear explanations', 'Confirmation before actions'], cta: 'Try a request', href: '#app', tone: 'warm' },
+  { n: '02', label: 'Keyboard', icon: 'keyboard', title: 'Stay in control.', copy: 'Navigate and act with familiar keys. No mouse or microphone needed.', points: ['Every control reachable by Tab', 'Focus moves to each new step', 'Readable action summaries'], cta: 'Open Readback', href: '#app', tone: 'dark' },
+  { n: '03', label: 'Assistive tech', icon: 'target', title: 'Designed to include.', copy: 'Built to work with NVDA, VoiceOver and TalkBack, using standard page structure.', points: ['Semantic navigation', 'Status messages your reader announces', 'Predictable interactions'], cta: 'Read the FAQ', href: '#faq', tone: 'light' },
+];
+const faqs: [string, string][] = [
+  ['What exactly is Readback?', 'Readback is an accessibility-first way to use Solana. It explains your wallet and every payment in plain words, and reads each payment back from the real transaction before you approve it.'],
+  ['Can I use Readback without relying on sight?', 'That is what it is built for. Every screen has headings and labelled controls, focus moves to each new step, and status updates are announced to your screen reader. It has passed automated keyboard and screen-reader checks; testing with blind users is still to come.'],
+  ['Does Readback make decisions or move funds for me?', 'No. AI only helps understand your request. Payments go only to saved contacts you verified, within limits checked in code, and nothing is sent until you press Confirm yourself. Saying or typing “confirm” does nothing.'],
+  ['Can I navigate with my keyboard or screen reader?', 'Yes. Use Tab and Shift+Tab to move, Enter or Space to activate, and Escape to cancel a review. Readback adds no global shortcuts, so your screen reader keys keep working.'],
+  ['What network does the prototype use?', 'Solana Devnet only. Test SOL has no monetary value. The wallet lives in your browser with no backup, so never use real funds. This is a hackathon prototype and has not been audited.'],
+];
 
 export function Landing() {
   return <div className="landing">
     <a className="skip" href="#main">Skip to main content</a>
+    <SiteNav />
     <div className="portrait-intro">
       <div className="portrait-backdrop" aria-hidden="true" />
-      <header className="portrait-header">
-        <a className="portrait-wordmark" href="#" aria-label="Readback home"><Brand /></a>
-        <nav aria-label="Website navigation"><a href="#how">How it works</a><a href="#safety">Safety</a><a href="#accessibility">Accessibility</a><a href="https://github.com/ChukwuebukaHenrey/ReadBack">Resources</a></nav>
-        <a className="button outline-light" href="#app">Open Readback <Icon name="arrow" size={17} /></a>
-      </header>
       <div className="hero-lettering-frame" aria-hidden="true"><svg className="hero-backword" viewBox="610 245 1470 275"><image href="/assets/readback-wordmark.png" width="2172" height="724" /></svg></div>
       <div className="hero-person-frame" aria-hidden="true"><div className="hero-person"><img src="/assets/readback-portrait.png" alt="" width="1076" height="1448" fetchPriority="high" /></div></div>
       <div className="hero-bottom-fade" aria-hidden="true" />
       <main id="main" tabIndex={-1}>
         <section className="portrait-hero" aria-labelledby="hero-heading">
-          <div className="portrait-copy"><p className="hero-eyebrow">SOLANA, FOR DIFFERENT WAYS OF INTERACTING</p><h1 id="hero-heading">A clearer way<br />into Solana.<br />On your terms.</h1><p className="portrait-description">Explore your wallet with clear words, familiar controls and screen-reader-friendly navigation.</p><div className="portrait-actions"><a className="button hero-primary" href="#app">Try Readback <Icon name="arrow" size={18} /></a><a className="button outline-light" href="#how">See how it works <span aria-hidden="true">▷</span></a></div><p className="portrait-network">Devnet prototype · Test funds only</p></div>
+          <div className="portrait-copy"><p className="hero-eyebrow">SOLANA, FOR DIFFERENT WAYS OF INTERACTING</p><h1 id="hero-heading">A clearer way<br />into Solana.<br />On your terms.</h1><div className="portrait-actions"><a className="button hero-primary" href="#app">Try Readback <Icon name="arrow" size={18} /></a><a className="button outline-light" href="#how">See how it works <span aria-hidden="true">▷</span></a></div><p className="portrait-network">Devnet prototype · Test funds only</p></div>
           <p className="hero-statement">Understand<br />every step.<br />Make it yours.</p>
-          <div className="hero-notes"><div className="hero-note-stack"><div className="hero-glass"><span><Icon name="keyboard" size={23} />Typed requests</span><p>“What can I do?”<br />Start with a question.</p></div><div className="hero-glass"><span><Icon name="activity" size={23} />Your controls</span><p className="note-large">Your pace.</p><p>Keyboard, text and<br />screen reader.</p></div></div><div className="hero-review"><span><Icon name="shield" size={27} />Your choice</span><p>AI interprets.<br />You decide.</p><span className="review-check" aria-hidden="true">✓</span></div></div>
+          <div className="hero-notes"><div className="hero-note-stack"><div className="hero-glass"><span><Icon name="chat" size={22} />Ask anything</span><p>Get clear answers about Solana in plain words.</p></div><div className="hero-glass"><span><Icon name="settings" size={22} />Your controls</span><p>Read, type, or listen your way.</p></div></div><div className="hero-review"><span><Icon name="person" size={24} />Built for you</span><p>Accessible, simple, and inclusive.</p></div></div>
         </section>
-        <section id="product" className="mission-section" aria-labelledby="mission-heading">
-          <div className="section-overline"><span>OUR MISSION</span><span>ACCESSIBLE ON SOLANA</span></div>
-          <h2 id="mission-heading">Readback makes<br />Solana understandable.<br /><span>For everyone.</span></h2>
-          <img className="mission-mark" src="/assets/readback-mark.png" alt="" width="240" height="240" loading="lazy" />
-          <p className="mission-description">A more inclusive way to explore Solana — with keyboard controls, screen-reader support and clear feedback at every step. More understanding. More independence.</p>
-          <div className="editorial-features">{features.map(feature => <article className="editorial-card" key={feature.art}><div className={`card-art art-${feature.art}`} aria-hidden="true"><span className="art-label"><Icon name={feature.icon} size={17} />{feature.label}</span>{feature.art === 'portrait' && <img src="/assets/readback-portrait.png" alt="" loading="lazy" />}{feature.art === 'waves' && <WaveArt />}{feature.art === 'mark' && <img src="/assets/readback-mark.png" alt="" loading="lazy" />}{feature.art === 'shield' && <div className="shield-disc"><Icon name="shield" size={72} /></div>}</div><div className="card-copy"><h3>{feature.title}</h3><p>{feature.copy}</p></div></article>)}</div>
+        <div id="hero-end" />
+
+        <section id="product" className="lp-mission" aria-labelledby="mission-heading">
+          <div className="lp-float f1" aria-hidden="true"><Icon name="speaker" size={34} /></div>
+          <div className="lp-float f2" aria-hidden="true"><Icon name="target" size={30} /></div>
+          <div className="lp-float f3" aria-hidden="true"><Icon name="spark" size={28} /></div>
+          <h2 id="mission-heading">Solana, made clearer.<br /><span className="lp-accent">Access, made personal.</span></h2>
+          <p className="lp-lead">Different ways to navigate. Plain-language explanations. Control that stays with you, every step of the way.</p>
+          <a className="lp-btn lp-btn-solid" href="#app">Explore Readback <Icon name="arrow" size={16} /></a>
         </section>
-        <section id="principles" className="principles-section" aria-labelledby="principles-heading"><div className="section-overline"><span>WHY READBACK</span><span>BUILT FOR INCLUSION</span></div><h2 id="principles-heading">Less guesswork.<br />More <span>understanding.</span></h2><p className="principles-intro">Know where you are, what you can do, and what comes next.</p><div className="principle-rows"><article><Icon name="keyboard" size={32} /><div><h3>YOUR WAY FIRST</h3><p>Navigate without a mouse or microphone. Ask for help whenever you need it.</p></div></article><article><Icon name="contacts" size={32} /><div><h3>SAVED CONTACTS</h3><p>Review a full address and verify who it belongs to before saving it.</p></div></article><article><Icon name="wallet" size={32} /><div><h3>SOLANA, MADE CLEAR</h3><p>Explore a real Devnet wallet with test funds and plain-language explanations.</p></div></article></div></section>
-        <section id="problem" className="principles-section story-section" aria-labelledby="problem-heading"><div className="section-overline"><span>THE PROBLEM</span><span>WHY IT MATTERS</span></div><h2 id="problem-heading">Most wallets<br /><span>can’t be heard.</span></h2><div className="principle-rows story-two"><article><Icon name="learn" size={32} /><div><h3>8 OF 10 WALLETS</h3><p>In a study of 10 popular crypto wallets, 8 had no accessibility features. Blind participants skipped backups and sent funds to the wrong address because nothing read it back. <a href="https://arxiv.org/pdf/2306.06261">Read the SOUPS 2023 study (PDF)</a></p></div></article><article><Icon name="shield" size={32} /><div><h3>LOOKALIKE ADDRESSES</h3><p>Lookalike-address scams, called address poisoning, are a reported problem on Solana. They copy the first and last characters of an address you trust. A blind user can’t check a long address by eye.</p></div></article></div></section>
-        <section id="how" className="principles-section story-section" aria-labelledby="how-heading"><div className="section-overline"><span>HOW IT WORKS</span><span>THREE STEPS</span></div><h2 id="how-heading">You ask. Code checks.<br /><span>You decide.</span></h2><ol className="story-steps"><li><h3>Say what you want</h3><p>Type a request such as “Send 0.2 SOL to Mum”, or use the form.</p></li><li><h3>Readback checks everything</h3><p>It checks the saved contact, the exact amount and your limits, then simulates the payment on Solana Devnet.</p></li><li><h3>You hear exactly what will happen</h3><p>The review is built from the real transaction, not by AI. You press Confirm. Solana settles it in about a second.</p></li></ol></section>
-        <section id="safety" className="principles-section story-section" aria-labelledby="safety-heading"><div className="section-overline"><span>SAFETY</span><span>RULES IN CODE</span></div><h2 id="safety-heading">AI can’t<br /><span>move money.</span></h2><ul className="story-list"><li>Payments go only to saved contacts you verified yourself.</li><li>AI understands requests. It never sets an address, an amount you didn’t give, or an approval.</li><li>Every payment is read back from the real transaction, with its fee and your balance after.</li><li>You confirm with a key press or click. Saying “confirm” does nothing.</li><li>Limits: 0.5 SOL per payment and 2 SOL per day, checked in the app.</li><li>Warnings when a new address looks like one you have used.</li><li>A consent receipt, a fingerprint of what you approved, is recorded on-chain with each payment.</li></ul></section>
-        <section id="built-for" className="principles-section story-section" aria-labelledby="built-for-heading"><div className="section-overline"><span>BUILT FOR</span><span>AND WHAT’S NEXT</span></div><h2 id="built-for-heading">Built for<br /><span>independence.</span></h2><div className="principle-rows story-two"><article><Icon name="keyboard" size={32} /><div><h3>WHO IT’S FOR</h3><p>Screen reader users (NVDA, VoiceOver, TalkBack), keyboard-only users, and anyone who wants to know exactly what they are signing.</p></div></article><article><Icon name="arrow" size={32} /><div><h3>ROADMAP</h3><p>Convert and trade with the same readback, real wallets with recovery, spending limits enforced on-chain, and testing with blind users in Nigeria.</p></div></article></div></section>
-        <section className="closing-portrait" aria-labelledby="closing-heading"><div className="closing-photo" aria-hidden="true" /><div><h2 id="closing-heading">A more inclusive<br />Solana experience.</h2><a className="button outline-light" href="#app">Find your next step <Icon name="arrow" size={18} /></a></div></section>
-        <section id="accessibility" className="accessibility-section" aria-labelledby="accessibility-heading"><div><p className="hero-eyebrow">DESIGNED FOR DIFFERENT WAYS OF INTERACTING</p><h2 id="accessibility-heading">Clarity is part<br />of the experience.</h2></div><div className="accessibility-details"><details><summary>Keyboard and screen reader controls</summary><p>Use Tab to move between controls and Enter or Space to activate buttons. Use the skip link to reach the main content. Page headings receive focus when you move between workspace views, and status updates are available to your screen reader.</p></details><details><summary>Text, sound and motion</summary><p>Every essential message is text. No microphone is needed. App speech is off so it won’t compete with your screen reader. The interface respects reduced-motion preferences and supports zoom.</p></details><details><summary>What works in this prototype?</summary><p>Create a disposable Devnet wallet, check its live balance, save verified contacts and explore Web3 explanations. Send test SOL to saved contacts after reviewing every detail, approve with a keyboard or pointer, hear incoming payments, and get plain explanations of past payments. Voice input is not available. Test funds only; browser wallets have no recovery. Manual assistive-technology and disabled-user testing are still pending. We do not claim WCAG conformance.</p></details></div></section>
+        <div className="lp-band">
+          <p>Built for the way you interact.</p>
+          <ul>{([['keyboard', 'Keyboard'], ['chat', 'Typed requests'], ['target', 'Screen readers'], ['check', 'Your approval']] as [IconName, string][]).map(([icon, label]) => <li key={label}><Icon name={icon} size={22} />{label}</li>)}</ul>
+        </div>
+
+        <section id="features" className="lp-section" aria-labelledby="features-heading">
+          <Pill icon="spark">What Readback does</Pill>
+          <h2 id="features-heading">Explore our <span className="lp-accent">standout features.</span></h2>
+          <div className="lp-feature-grid">
+            <article className="lp-feature f-peach"><div><h3>Understand your wallet</h3><p>Your live Devnet balance and activity, explained in language that makes sense.</p></div><div className="lp-wallet-card" aria-hidden="true"><span>◆ YOUR WALLET · EXAMPLE</span><strong>12.48 SOL</strong><i /><i /><i /></div></article>
+            <article className="lp-feature f-sand"><div><h3>Screen-reader first</h3><p>Every update is written for your screen reader. App speech is there if you want it, off by default.</p></div><div className="lp-wave-card" aria-hidden="true">{[30, 46, 62, 80, 96, 80, 62, 46, 30, 18].map((h, i) => <b key={i} style={{ height: h }} />)}</div></article>
+            <article className="lp-feature f-cream"><div><h3>Clear transaction reviews</h3><p>Hear the contact, the full address, the amount, the fee and your balance after, before you confirm.</p></div><ul className="lp-review-stack" aria-hidden="true"><li><Icon name="check" size={14} />Transaction explained</li><li><Icon name="check" size={14} />Destination checked</li><li><Icon name="check" size={14} />You decide what happens</li></ul></article>
+            <article className="lp-feature f-dark"><div><h3>Accessible by design</h3><p>Clear contrast, keyboard access and screen readers in mind from the first line of code.</p></div><div className="lp-diamond" aria-hidden="true" /></article>
+          </div>
+        </section>
+
+        <section className="lp-section lp-details" aria-labelledby="details-heading">
+          <Pill icon="spark">More ways to use it</Pill>
+          <h2 id="details-heading">The details matter. <span className="lp-accent">All of them.</span></h2>
+          <p className="lp-lead">An experience that adapts to your needs, not the other way around.</p>
+          <ul className="lp-chips">{details.map(d => <li key={d.title}><span className="lp-chip-icon" aria-hidden="true"><Icon name={d.icon} size={22} /></span><span><strong>{d.title}</strong>{d.copy}</span></li>)}</ul>
+          <div className="lp-phone-stage" aria-hidden="true">
+            <p className="lp-ghost-word">ACCESS ON YOUR TERMS</p>
+            <div className="lp-phone"><div className="lp-notch" /><p className="lp-phone-brand">◆ Readback</p><p className="lp-phone-title">Hi there.</p><p className="lp-phone-sub">What would you like to do today?</p><p className="lp-phone-bubble">“Explain my latest payment.”</p><p className="lp-phone-btn"><Icon name="chat" size={16} />Ask a question</p></div>
+          </div>
+        </section>
+
+        <section className="lp-section" aria-labelledby="clarity-heading">
+          <Pill icon="spark">Why it matters</Pill>
+          <h2 id="clarity-heading">Clarity changes <span className="lp-accent">everything.</span></h2>
+          <div className="lp-clarity">
+            <div className="lp-gauge-stage" aria-hidden="true"><div className="lp-gauge-card"><p><span>Clarity check</span><span className="lp-orange-text">Review ↗</span></p><div className="lp-gauge" /><strong>Ready</strong><small>Your action, explained first</small></div></div>
+            <div className="lp-clarity-copy">
+              <h3>Less guesswork.<br /><span className="lp-accent">More confidence.</span></h3>
+              <p>In a study of 10 popular crypto wallets, 8 had no accessibility features. Blind participants sent funds to the wrong address because nothing read it back. <a href={soups}>Read the SOUPS 2023 study (PDF)</a></p>
+              <ul className="lp-checklist"><Check>Know what you are about to do</Check><Check>Understand information in plain language</Check><Check>Stay in control of your wallet</Check></ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="lp-section" aria-labelledby="control-heading">
+          <Pill icon="check">Our approach</Pill>
+          <h2 id="control-heading">Built around <span className="lp-accent">your control.</span></h2>
+          <p className="lp-lead">Every interaction starts with clarity and ends with your choice.</p>
+          <div className="lp-pills-grid">
+            <div className="lp-capsule c-ghost" aria-hidden="true"><Icon name="bolt" size={34} /></div>
+            <div className="lp-capsule c-tint"><strong className="lp-big">03</strong><span>ways to interact: keyboard, typed requests and screen readers</span></div>
+            <div className="lp-capsule c-ghost" aria-hidden="true"><Icon name="spark" size={40} /></div>
+            <div className="lp-capsule c-tint c-wide"><strong className="lp-big">You decide.</strong><span>Understand each step before you approve an action. AI can’t move money.</span></div>
+            <div className="lp-capsule c-solid"><strong className="lp-big">Clear.</strong><span>Payments read back before you sign.</span></div>
+          </div>
+        </section>
+
+        <section id="how" className="lp-section lp-how" aria-labelledby="how-heading">
+          <div className="lp-how-intro">
+            <Pill icon="arrow">How it works</Pill>
+            <h2 id="how-heading">From question<br /><span className="lp-accent">to clarity.</span></h2>
+            <p className="lp-lead">Three simple steps to explore Solana in a way that works for you.</p>
+            <a className="lp-btn lp-btn-solid" href="#app">Try Readback <Icon name="arrow" size={16} /></a>
+          </div>
+          <div className="lp-phone tilt" aria-hidden="true"><div className="lp-notch" /><p className="lp-phone-brand">◆ Readback</p><p className="lp-phone-title">What can I do?</p><p className="lp-phone-sub">Ask about balances, payments or Solana itself.</p><p className="lp-phone-btn"><Icon name="chat" size={16} />Ask a question</p><p className="lp-phone-row">My wallet balance →</p><p className="lp-phone-row">Explain my last payment →</p><p className="lp-phone-note">No action happens without your confirmation.</p></div>
+          <ol className="lp-steps">
+            <li><h3>Ask your question</h3><p>Type a request, or use your keyboard and preferred assistive technology.</p></li>
+            <li><h3>Get an explanation</h3><p>Readback checks the contact, amount and limits, simulates the payment, and reads back exactly what will happen.</p></li>
+            <li><h3>Choose what happens next</h3><p>Review the details and decide. Nothing is sent until you press Confirm.</p></li>
+          </ol>
+        </section>
+
+        <section id="access" className="lp-section" aria-labelledby="ways-heading">
+          <Pill icon="target">Designed for choice</Pill>
+          <h2 id="ways-heading">Your way in. <span className="lp-accent">Your pace.</span></h2>
+          <p className="lp-lead">One experience, with more than one way to navigate.</p>
+          <div className="lp-ways">{ways.map(w => <article key={w.n} className={`lp-way w-${w.tone}`}>
+            <div className="lp-way-top"><p>{w.n} — {w.label}</p><Icon name={w.icon} size={52} /></div>
+            <div className="lp-way-body"><h3>{w.title}</h3><p>{w.copy}</p><ul className="lp-ticks">{w.points.map(p => <li key={p}><Icon name="check" size={14} />{p}</li>)}</ul><a className={`lp-btn ${w.tone === 'dark' ? 'lp-btn-solid' : 'lp-btn-ghost'}`} href={w.href}>{w.cta} <Icon name="arrow" size={16} /></a></div>
+          </article>)}</div>
+        </section>
+
+        <section id="resources" className="lp-section" aria-labelledby="resources-heading">
+          <Pill icon="book">Resources</Pill>
+          <h2 id="resources-heading">Learn about <span className="lp-accent">Solana and accessibility.</span></h2>
+          <div className="lp-resources">
+            <a className="lp-resource-main" href="https://solana.com/docs"><span className="lp-orb-art" aria-hidden="true"><span /></span><span className="lp-tag">Getting started · Solana docs</span><span className="lp-resource-title">A beginner-friendly introduction to Solana<span className="sr-only"> (opens solana.com)</span></span></a>
+            <ul>
+              <li><a href={soups}><span className="lp-thumb t1" aria-hidden="true"><Icon name="bolt" size={30} /></span><span><span className="lp-tag">Research</span><span className="lp-resource-title">Why crypto wallets fail blind users (SOUPS 2023)<span className="sr-only"> (PDF)</span></span></span></a></li>
+              <li><a href="https://webaim.org/techniques/keyboard/"><span className="lp-thumb t2" aria-hidden="true"><Icon name="keyboard" size={30} /></span><span><span className="lp-tag">Practical tips</span><span className="lp-resource-title">Getting more out of keyboard navigation<span className="sr-only"> (opens webaim.org)</span></span></span></a></li>
+              <li><a href="#app"><span className="lp-thumb t3" aria-hidden="true"><Icon name="check" size={30} /></span><span><span className="lp-tag">Wallet basics</span><span className="lp-resource-title">What to check before approving a payment</span></span></a></li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="faq" className="lp-section lp-faq" aria-labelledby="faq-heading">
+          <Pill icon="chat">FAQ</Pill>
+          <h2 id="faq-heading">Frequently asked <span className="lp-accent">questions.</span></h2>
+          <div className="lp-faq-list">{faqs.map(([q, a], i) => <details key={q} open={i === 0}><summary>{q}<Icon name="chevron" size={20} /></summary><p>{a}</p></details>)}</div>
+          <p className="lp-faq-more">Still have a question? <a href="#app">Explore Readback →</a></p>
+        </section>
+
+        <section className="lp-cta" aria-labelledby="cta-heading">
+          <h2 id="cta-heading">Solana, on <em>your</em> terms.</h2>
+          <p>Explore your wallet with clearer information and accessible controls. The next step is yours.</p>
+          <a className="lp-btn lp-btn-light" href="#app">Open Readback <Icon name="arrow" size={16} /></a>
+          <div className="lp-cta-card left" aria-hidden="true"><small>Your wallet · example</small><strong>12.48 SOL</strong><small>Balance at a glance</small></div>
+          <div className="lp-cta-card right" aria-hidden="true"><small>Action preview</small><strong>Review first</strong><small>Nothing moves without you</small></div>
+        </section>
       </main>
     </div>
-    <footer className="portrait-footer"><a className="brand" href="#" aria-label="Readback home"><Brand /></a><p>AI interprets. You stay in control.<br />Built in 48 hours for the MLH Solana Hackathon. Prototype. Devnet only. Not audited.</p><a href="https://github.com/ChukwuebukaHenrey/ReadBack">View the project on GitHub <span aria-hidden="true">↗</span></a></footer>
+    <footer className="lp-footer">
+      <div className="lp-footer-brand"><p className="lp-footer-logo"><span aria-hidden="true">◆</span> Readback</p><p>A clearer way into Solana.</p><p className="lp-footer-note">Built in 48 hours for the MLH Solana Hackathon. Prototype. Devnet only. Not audited.</p></div>
+      <nav aria-label="Footer" className="lp-footer-cols">
+        <div><p className="lp-footer-head">Product</p><a href="#product">Overview</a><a href="#features">Features</a><a href="#how">How it works</a></div>
+        <div><p className="lp-footer-head">Explore</p><a href="#access">Accessibility</a><a href="#resources">Resources</a><a href="#faq">FAQ</a></div>
+        <div><p className="lp-footer-head">Connect</p><a href={github}>GitHub</a><a href={`${github}/issues`}>Report an issue</a><a href="#app">Open the app</a></div>
+        <div><p className="lp-footer-head">Legal</p><a href={`${github}/blob/main/LICENSE`}>MIT License</a><span>© 2026 Readback</span></div>
+      </nav>
+    </footer>
   </div>;
 }
